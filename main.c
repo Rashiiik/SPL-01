@@ -38,13 +38,14 @@ typedef struct {
     unsigned char r;
     unsigned char g;
     unsigned char b;
-    unsigned char a; // For storing the Alpha channel(opacity) of 32 bit 
+    unsigned char a; 
 
 } RGBA;
 
-RGBA **read_bmp(const char *filename, int *width, int *height, int *bpp) {
+RGBA **readBmp(const char *filename, int *width, int *height, int *bpp) {
 
     FILE *fp = fopen(filename, "rb");
+
     if (!fp) {
         perror("Cannot open file");
         return NULL;
@@ -90,6 +91,7 @@ RGBA **read_bmp(const char *filename, int *width, int *height, int *bpp) {
     for (int i = 0; i < *height; i++) 
     {
         fread(row, sizeof(unsigned char), row_padded, fp);
+        
         for (int j = 0; j < *width; j++) 
         {
             if (*bpp == 24) 
@@ -114,6 +116,92 @@ RGBA **read_bmp(const char *filename, int *width, int *height, int *bpp) {
     return pixels;
 }
 
+int writeBmp(const char *filename, RGBA **pixels, int width, int height)
+{
+    FILE *fp = fopen(filename, "wb");
+
+    if (!fp) 
+    {
+        printf("Cannot create output file");
+        return 0;
+    }
+
+    int row_padded = (width * 3 + 3) & (~3);
+    int pixel_data_size = row_padded * height;
+
+    BITMAPFILEHEADER fileHeader;
+    BITMAPINFOHEADER infoHeader;
+
+    fileHeader.bfType = 0x4D42; 
+    fileHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + pixel_data_size;
+    fileHeader.bfReserved1 = 0;
+    fileHeader.bfReserved2 = 0;
+    fileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    infoHeader.biSize = sizeof(BITMAPINFOHEADER);
+    infoHeader.biWidth = width;
+    infoHeader.biHeight = height;
+    infoHeader.biPlanes = 1;
+    infoHeader.biBitCount = 24;        
+    infoHeader.biCompression = 0;      
+    infoHeader.biSizeImage = pixel_data_size;
+    infoHeader.biXPelsPerMeter = 2835; 
+    infoHeader.biYPelsPerMeter = 2835; 
+    infoHeader.biClrUsed = 0;
+    infoHeader.biClrImportant = 0;
+
+    fwrite(&fileHeader, sizeof(BITMAPFILEHEADER), 1, fp);
+    fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
+
+    unsigned char *row = (unsigned char *)malloc(row_padded);
+
+    for (int y = 0; y < height; y++)
+    {
+        int src_y = height - 1 - y; 
+
+        for (int x = 0; x < width; x++)
+        {
+            row[x * 3 + 0] = pixels[src_y][x].b;
+            row[x * 3 + 1] = pixels[src_y][x].g;
+            row[x * 3 + 2] = pixels[src_y][x].r;
+        }
+
+        for (int p = width * 3; p < row_padded; p++)
+        {
+            row[p] = 0;
+        }
+
+        fwrite(row, 1, row_padded, fp);
+    }
+
+    free(row);
+    fclose(fp);
+
+    return 1;
+}
+
+
+void convertToGrayscale(RGBA **pixels, int width, int height) {
+
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            unsigned char r = pixels[i][j].r;
+            unsigned char g = pixels[i][j].g;
+            unsigned char b = pixels[i][j].b;
+
+            unsigned char gray = (unsigned char)(0.299*r + 0.587*g + 0.114*b);
+
+            pixels[i][j].r = gray;
+            pixels[i][j].g = gray;
+            pixels[i][j].b = gray;
+        }
+        
+    }
+    
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc < 3) {
@@ -123,7 +211,7 @@ int main(int argc, char *argv[]) {
 
     int width, height, bpp;
 
-    RGBA **pixels = read_bmp(argv[1], &width, &height, &bpp);
+    RGBA **pixels = readBmp(argv[1], &width, &height, &bpp);
 
     if (!pixels)
     {
@@ -142,15 +230,17 @@ int main(int argc, char *argv[]) {
 
     while (1)
     {
-        printf("----------------------------------\n");
+        printf("==============MENU================\n");
         printf("[1] Upscale\n");
         printf("[2] Denoise\n");
         printf("[3] Sharpening\n");
         printf("[4] Edge Detection\n");
-        printf("[5] Image Status\n");
-        printf("[6] Boost Mode : \n");
-        printf("[7] Quit\n");
-        printf("----------------------------------\n");
+        printf("[5] Convert to Grayscale\n");
+        printf("[6] Apply Blur\n");
+        printf("[7] Status\n");
+        printf("[8] Boost Mode\n");
+        printf("[9] Quit\n");
+        printf("==================================\n");
 
         int choice;
 
@@ -158,21 +248,42 @@ int main(int argc, char *argv[]) {
 
         scanf("%d", &choice);
 
-        printf("----------------------------------\n");
+        if (choice == 4)
+        {
+            printf("==========Edge Detection==========\n");
+            printf("[1] Sobel Operator\n");
+            printf("[?] Back\n");
+            printf("==================================\n");
 
-        if (choice == 5)
-        {
-            printf("BMP Info: %s\n", argv[1]);
-            printf("Width: %d\n", width);
-            printf("Height: %d\n", height);
-            printf("Bit Count: %d\n", bpp);
-            printf("Image will be written to: %s\n", argv[2]);
+            int subChoice;
+            printf("Enter: ");
+            scanf("%d", &subChoice);
+            
         }
-        else if (choice == 7)
+        else if (choice == 5)
         {
-            break;
+            convertToGrayscale(pixels, width, height);
+            writeBmp(argv[2], pixels, width, height);
+            printf("*Operation Succesfull*\n");
         }
         
+        
+        if (choice == 7)
+        {
+            printf("============BMP Info===============\n");
+            printf("Input      : %s\n", argv[1]);
+            printf("Width      : %d\n", width);
+            printf("Height     : %d\n", height);
+            printf("Bit Count  : %d\n", bpp);
+            printf("Output     : %s\n", argv[2]);
+            printf("Boost Mode : *[Lorem ipsum]*\n");
+            
+        }
+        else if (choice == 9)
+        {
+            printf("==================================\n");
+            break;
+        }
         
     }
 
