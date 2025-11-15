@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
+#include <unistd.h>
 
 #pragma pack(push, 1)
 
@@ -91,7 +93,7 @@ RGBA **readBmp(const char *filename, int *width, int *height, int *bpp) {
     for (int i = 0; i < *height; i++) 
     {
         fread(row, sizeof(unsigned char), row_padded, fp);
-        
+
         for (int j = 0; j < *width; j++) 
         {
             if (*bpp == 24) 
@@ -116,8 +118,8 @@ RGBA **readBmp(const char *filename, int *width, int *height, int *bpp) {
     return pixels;
 }
 
-int writeBmp(const char *filename, RGBA **pixels, int width, int height)
-{
+int writeBmp(const char *filename, RGBA **pixels, int width, int height) {
+
     FILE *fp = fopen(filename, "wb");
 
     if (!fp) 
@@ -175,11 +177,36 @@ int writeBmp(const char *filename, RGBA **pixels, int width, int height)
     }
 
     free(row);
+
     fclose(fp);
 
     return 1;
 }
 
+void print_progress(float progress) {
+
+    int barWidth = 32; 
+
+    int pos = (int)(progress * barWidth);
+
+    printf("\r["); 
+
+    for (int i = 0; i < barWidth; i++)
+    {
+        if (i < pos) 
+        {
+            printf("#");
+        }
+        else 
+        {
+            printf(".");
+        }
+
+    }
+
+    printf("] %6.2f%%", progress * 100.0f);
+    fflush(stdout);
+}
 
 void convertToGrayscale(RGBA **pixels, int width, int height) {
 
@@ -197,9 +224,115 @@ void convertToGrayscale(RGBA **pixels, int width, int height) {
             pixels[i][j].g = gray;
             pixels[i][j].b = gray;
         }
+
+        print_progress((float)(i + 1) / height);
         
     }
+
+    print_progress(1.0f); 
     
+}
+
+void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
+
+    int kernelSize = ceil(6*sigma + 1);
+
+    if (kernelSize % 2 == 0)
+    {
+        kernelSize++;
+    }
+
+    float kernel[kernelSize];
+
+    int center = kernelSize/2;
+
+    float sum = 0;
+
+    RGBA temp[height][width];
+
+    for (int i = 0; i < kernelSize; i++)
+    {
+        int x = i - center;
+
+        kernel[i] = exp(-(x*x)/(2*sigma*sigma));
+
+        sum = sum + kernel[i];
+    }
+
+    for (int i = 0; i < kernelSize; i++)
+    {
+        kernel[i] = kernel[i]/sum;
+    }
+    
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            for (int i = 0; i < kernelSize; i++)
+            {
+                int dx = i - center;
+                int nx = x + dx;
+
+                if (nx < 0)
+                {
+                    nx = 0;
+                }
+
+                if (nx >= width)
+                {
+                    nx = width-1;
+                }
+                
+                sumR = sumR + kernel[i]*pixels[y][nx].r;
+                sumG = sumG + kernel[i]*pixels[y][nx].g;
+                sumB = sumB + kernel[i]*pixels[y][nx].b;
+                
+            }
+
+            temp[y][x].r = sumR;
+            temp[y][x].g = sumG;
+            temp[y][x].b = sumB;
+        }
+        
+    }
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            for (int i = 0; i < kernelSize; i++)
+            {
+                int dy = i - center;
+                int ny = y + dy;
+
+                if (ny < 0)
+                {
+                    ny = 0;
+                }
+
+                if (ny >= height)
+                {
+                    ny = height-1;
+                }
+                
+                sumR = sumR + kernel[i]*temp[ny][x].r;
+                sumG = sumG + kernel[i]*temp[ny][x].g;
+                sumB = sumB + kernel[i]*temp[ny][x].b;
+
+            }
+
+            pixels[y][x].r = round(sumR);
+            pixels[y][x].g = round(sumG);
+            pixels[y][x].b = round(sumB);
+            
+        }
+        
+    }
+
 }
 
 int main(int argc, char *argv[]) {
@@ -258,15 +391,38 @@ int main(int argc, char *argv[]) {
             int subChoice;
             printf("Enter: ");
             scanf("%d", &subChoice);
+
+            if (subChoice == 1)
+            {
+                convertToGrayscale(pixels, width, height);
+                gaussianBlur(pixels, width, height, 1.0);
+            }
+            
             
         }
         else if (choice == 5)
         {
             convertToGrayscale(pixels, width, height);
             writeBmp(argv[2], pixels, width, height);
-            printf("*Operation Succesfull*\n");
+            printf("\nGrayscale Conversion Complete\n");
         }
-        
+        else if (choice == 6)
+        {
+            printf("==============Blur================\n");
+            printf("[1] Gaussian\n");
+            printf("[?] Back\n");
+            printf("==================================\n");
+
+            int subChoice;
+            printf("Enter: ");
+            scanf("%d", &subChoice);
+
+            if (subChoice == 1)
+            {
+                gaussianBlur(pixels, width, height, 1.0);
+                writeBmp(argv[2], pixels, width, height);
+            }
+        }
         
         if (choice == 7)
         {
@@ -276,7 +432,7 @@ int main(int argc, char *argv[]) {
             printf("Height     : %d\n", height);
             printf("Bit Count  : %d\n", bpp);
             printf("Output     : %s\n", argv[2]);
-            printf("Boost Mode : *[Lorem ipsum]*\n");
+            printf("Boost Mode : [Lorem ipsum]\n");
             
         }
         else if (choice == 9)
