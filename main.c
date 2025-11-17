@@ -180,6 +180,8 @@ int writeBmp(const char *filename, RGBA **pixels, int width, int height) {
 
     fclose(fp);
 
+    printf("Image written to output: %s\n", filename);
+
     return 1;
 }
 
@@ -210,6 +212,8 @@ void print_progress(float progress) {
 
 void convertToGrayscale(RGBA **pixels, int width, int height) {
 
+    printf("Converting to Grayscale\n");
+
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
@@ -229,7 +233,9 @@ void convertToGrayscale(RGBA **pixels, int width, int height) {
         
     }
 
-    print_progress(1.0f); 
+    print_progress(1.0f);
+    
+    printf("\n");
     
 }
 
@@ -263,6 +269,10 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
     {
         kernel[i] = kernel[i]/sum;
     }
+
+    printf("Applying Gaussian Blur...\n");
+
+    printf("Horizontal Pass...\n");
     
     for (int y = 0; y < height; y++)
     {
@@ -295,8 +305,12 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
             temp[y][x].g = sumG;
             temp[y][x].b = sumB;
         }
+
+        print_progress((float)(y+1) / height);
         
     }
+
+    printf("\nVertical Pass...\n");
 
     for (int y = 0; y < height; y++)
     {
@@ -331,8 +345,102 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
             
         }
         
+        print_progress((float)(y+1)/height);
+        
     }
 
+    printf("\n");
+
+}
+
+void sobelOperator(RGBA **pixels, int width, int height, int threshold) {
+    
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float gx = 0, gy = 0;
+
+            for (int ky = -1; ky <= 1; ky++)
+            {
+                for (int kx = -1; kx <= 1; kx++)
+                {
+                    int ny = y + ky;
+                    int nx = x + kx;
+                    
+                    if (ny < 0)
+                    {
+                        ny = 0;
+                    }
+
+                    if (ny >= height)
+                    {
+                        ny = height - 1;
+                    }
+
+                    if (nx < 0)
+                    {
+                        nx = 0;
+                    }
+
+                    if (nx >= width)
+                    {
+                        nx = width - 1;
+                    }
+                    
+                    
+                }
+                
+            }
+            
+        }
+        
+    }
+    
+}
+
+void transpose(RGBA **pixels, int width, int height) {
+
+    RGBA temp[width][height];
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            temp[y][x] = pixels[x][y];
+        }
+        
+    }
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            pixels[y][x] = temp[y][x];
+        }
+        
+    }
+
+}
+
+void negative(RGBA **pixels, int width, int height) {
+
+    printf("Converting to negative....\n");
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            pixels[y][x].r = 255 - pixels[y][x].r;
+            pixels[y][x].g = 255 - pixels[y][x].g;
+            pixels[y][x].b = 255 - pixels[y][x].b;
+        }
+        
+        print_progress((float)(y+1)/height);
+    }
+
+    printf("\n");
+    
 }
 
 int main(int argc, char *argv[]) {
@@ -368,11 +476,10 @@ int main(int argc, char *argv[]) {
         printf("[2] Denoise\n");
         printf("[3] Sharpening\n");
         printf("[4] Edge Detection\n");
-        printf("[5] Convert to Grayscale\n");
-        printf("[6] Apply Blur\n");
-        printf("[7] Status\n");
-        printf("[8] Boost Mode\n");
-        printf("[9] Quit\n");
+        printf("[5] Utilities\n");
+        printf("[6] Status\n");
+        printf("[7] Boost Mode\n");
+        printf("[8] Quit\n");
         printf("==================================\n");
 
         int choice;
@@ -396,21 +503,20 @@ int main(int argc, char *argv[]) {
             {
                 convertToGrayscale(pixels, width, height);
                 gaussianBlur(pixels, width, height, 1.0);
+                sobelOperator(pixels, width, height, 100);
+                writeBmp(argv[2], pixels, width, height);
             }
             
             
         }
         else if (choice == 5)
         {
-            convertToGrayscale(pixels, width, height);
-            writeBmp(argv[2], pixels, width, height);
-            printf("\nGrayscale Conversion Complete\n");
-        }
-        else if (choice == 6)
-        {
-            printf("==============Blur================\n");
-            printf("[1] Gaussian\n");
-            printf("[?] Back\n");
+            printf("============Utilites==============\n");
+            printf("[1] Grayscale Conversion\n");
+            printf("[2] Apply Blur\n");
+            printf("[3] Transpose/Rotate\n");
+            printf("[4] Negative\n");
+            printf("[5] Back\n");
             printf("==================================\n");
 
             int subChoice;
@@ -419,12 +525,27 @@ int main(int argc, char *argv[]) {
 
             if (subChoice == 1)
             {
-                gaussianBlur(pixels, width, height, 1.0);
+                convertToGrayscale(pixels, width, height);
                 writeBmp(argv[2], pixels, width, height);
             }
+            else if (subChoice == 2)
+            {
+                gaussianBlur(pixels, width, height, 1);
+                writeBmp(argv[2], pixels, width, height);
+            }
+            else if (subChoice == 3)
+            {
+                transpose(pixels, width, height);
+                writeBmp(argv[2], pixels, width, height);
+            }
+            else if (subChoice == 4)
+            {
+                negative(pixels, width, height);
+                writeBmp(argv[2], pixels, width, height);
+            }
+            
         }
-        
-        if (choice == 7)
+        else if (choice == 6)
         {
             printf("============BMP Info===============\n");
             printf("Input      : %s\n", argv[1]);
@@ -435,7 +556,7 @@ int main(int argc, char *argv[]) {
             printf("Boost Mode : [Lorem ipsum]\n");
             
         }
-        else if (choice == 9)
+        else if (choice == 8)
         {
             printf("==================================\n");
             break;
