@@ -207,6 +207,7 @@ void print_progress(float progress) {
     }
 
     printf("] %6.2f%%", progress * 100.0f);
+
     fflush(stdout);
 }
 
@@ -254,7 +255,12 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
 
     float sum = 0;
 
-    RGBA temp[height][width];
+    RGBA **temp = malloc(height * sizeof(RGBA *));
+
+    for (int i = 0; i < height; i++) 
+    {
+        temp[i] = malloc(width * sizeof(RGBA));
+    }
 
     for (int i = 0; i < kernelSize; i++)
     {
@@ -351,10 +357,36 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
 
     printf("\n");
 
+    for (int i = 0; i < height; i++) 
+    {
+        free(temp[i]);
+    }
+    
+    free(temp);
+
 }
 
 void sobelOperator(RGBA **pixels, int width, int height, int threshold) {
-    
+
+    int Gx[3][3] = { 
+        {-1, 0, 1},
+        {-2, 0, 2}, 
+        {-1, 0, 1}
+    };
+
+    int Gy[3][3] = {
+        {-1, -2, -1},
+        {0, 0, 0},
+        {1, 2, 1}
+    };
+
+    unsigned char **temp = malloc(height * sizeof(unsigned char *));
+
+    for (int i = 0; i < height; i++)
+    {
+        temp[i] = calloc(width, sizeof(unsigned char));
+    }
+
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
@@ -370,7 +402,7 @@ void sobelOperator(RGBA **pixels, int width, int height, int threshold) {
                     
                     if (ny < 0)
                     {
-                        ny = 0;
+                        ny = 0;                         
                     }
 
                     if (ny >= height)
@@ -388,26 +420,66 @@ void sobelOperator(RGBA **pixels, int width, int height, int threshold) {
                         nx = width - 1;
                     }
                     
+                    float intensity = pixels[ny][nx].r;
+
+                    gx += intensity * Gx[ky+1][kx+1];
+                    gy += intensity * Gy[ky+1][kx+1];
                     
                 }
                 
             }
+
+            float mag = sqrtf(gx*gx + gy*gy);
             
+            if (mag > threshold)
+            {
+                temp[y][x] = 255;
+            }
+            else
+            {
+                temp[y][x] = 0;
+            }
+        
         }
+
+        print_progress((float)(y+1)/height);
         
     }
+
+    for (int y = 0; y < height; y++) 
+    {
+        for (int x = 0; x < width; x++) 
+        {
+            unsigned char v = temp[y][x];
+            pixels[y][x].r = v;
+            pixels[y][x].g = v;
+            pixels[y][x].b = v;
+        }
+    }
+
+    for (int i = 0; i < height; i++) 
+    {
+        free(temp[i]);
+    }
+    
+    free(temp);
     
 }
 
 void transpose(RGBA **pixels, int width, int height) {
 
-    RGBA temp[width][height];
+    RGBA **temp = malloc(width*(sizeof(RGBA *)));
+
+    for (int i = 0; i < width; i++)
+    {
+        temp[i] = malloc(height*(sizeof(RGBA)));
+    }
 
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            temp[y][x] = pixels[x][y];
+            temp[x][y] = pixels[y][x];                 // Under construction
         }
         
     }
@@ -420,6 +492,14 @@ void transpose(RGBA **pixels, int width, int height) {
         }
         
     }
+     
+
+    for (int i = 0; i < height; i++) 
+    {
+        free(temp[i]);
+    }
+
+    free(temp);
 
 }
 
@@ -440,6 +520,24 @@ void negative(RGBA **pixels, int width, int height) {
     }
 
     printf("\n");
+    
+}
+
+void convertToAscii(RGBA **pixels, int width, int height) {
+
+    const char asciiChar[] = "@%%#*+=-:. ";
+
+    int len = strlen(asciiChar);
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)                  // Need to downscale first else it doesnt fit
+        {
+            int index = pixels[y][x].r * (len-1)/255;
+            printf("%c", asciiChar[index]);
+        }
+        printf("\n");
+    }
     
 }
 
@@ -491,7 +589,7 @@ int main(int argc, char *argv[]) {
         if (choice == 4)
         {
             printf("==========Edge Detection==========\n");
-            printf("[1] Sobel Operator\n");
+            printf("[1] Sobel Operator[Needs work]\n");
             printf("[?] Back\n");
             printf("==================================\n");
 
@@ -514,14 +612,20 @@ int main(int argc, char *argv[]) {
             printf("============Utilites==============\n");
             printf("[1] Grayscale Conversion\n");
             printf("[2] Apply Blur\n");
-            printf("[3] Transpose/Rotate\n");
-            printf("[4] Negative\n");
+            printf("[3] Transpose/Rotate[Crashes]\n");
+            printf("[4] Negative[Works]\n");
             printf("[5] Back\n");
             printf("==================================\n");
 
             int subChoice;
             printf("Enter: ");
             scanf("%d", &subChoice);
+
+            if (subChoice > 5)
+            {
+                printf("Enter a Valid choice\n");
+            }
+            
 
             if (subChoice == 1)
             {
@@ -542,6 +646,10 @@ int main(int argc, char *argv[]) {
             {
                 negative(pixels, width, height);
                 writeBmp(argv[2], pixels, width, height);
+            }
+            else if (subChoice == 5)
+            {
+                continue;
             }
             
         }
