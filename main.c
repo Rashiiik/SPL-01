@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         printf("==============MENU================\n");
-        printf("[1] Upscale\n");
+        printf("[1] Scaling\n");
         printf("[2] Denoise\n");
         printf("[3] Sharpening\n");
         printf("[4] Edge Detection\n");
@@ -42,6 +42,49 @@ int main(int argc, char *argv[]) {
         printf("Enter: ");
         scanf("%d", &choice);
 
+        if (choice == 1)
+        {
+            int newWidth, newHeight;
+            printf("==========Upscaling/Downscaling==========\n");
+            printf("[1] Bilinear Interpolation\n");
+            printf("[?] Back\n");
+            printf("==================================\n");
+
+            int subChoice;
+            printf("Enter: ");
+            scanf("%d", &subChoice);
+            if (subChoice == 1)
+            {
+                printf("Enter new width: ");
+                scanf("%d", &newWidth);
+                printf("Enter new height: ");
+                scanf("%d", &newHeight);
+                
+                pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight);
+                width = newWidth;
+                height = newHeight;
+
+                writeBmp(argv[2], pixels, width, height);
+            }
+
+        }
+        else if (choice == 2)
+        {
+            printf("==========Denoising==========\n");
+            printf("[1] Gaussian Blur\n");
+            printf("[?] Back\n");
+            printf("==================================\n");
+
+            int subChoice;
+            printf("Enter: ");
+            scanf("%d", &subChoice);
+
+            if (subChoice == 1) {
+                gaussianBlur(pixels, width, height, 1);
+                writeBmp(argv[2], pixels, width, height);
+            }
+        }
+        
         if (choice == 4) {
             printf("==========Edge Detection==========\n");
             printf("[1] Sobel Operator[Needs work]\n");

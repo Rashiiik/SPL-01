@@ -36,7 +36,6 @@ typedef struct {
     unsigned char a;
 } RGBA;
 
-// BMP I/O functions
 RGBA **readBmp(const char *filename, int *width, int *height, int *bpp);
 int writeBmp(const char *filename, RGBA **pixels, int width, int height);
 
