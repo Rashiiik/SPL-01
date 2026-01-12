@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <pthread.h>
+
 
 void convertToGrayscale(RGBA **pixels, int width, int height) {
 
@@ -176,6 +178,8 @@ void sobelOperator(RGBA **pixels, int width, int height, int threshold) {
         free(temp[i]);
     }
     free(temp);
+
+    printf("\n");
 }
 
 void transpose(RGBA **pixels, int width, int height) {
@@ -206,9 +210,9 @@ void transpose(RGBA **pixels, int width, int height) {
 RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight) {
     printf("Resizing Image using Bilinear Interpolation...\n");
 
-    RGBA **output = malloc(newHeight * sizeof(RGBA *));
+    RGBA **temp = malloc(newHeight * sizeof(RGBA *));
     for (int i = 0; i < newHeight; i++) {
-        output[i] = malloc(newWidth * sizeof(RGBA));
+        temp[i] = malloc(newWidth * sizeof(RGBA));
     }
 
     float xRatio = (float)(oldWidth - 1) / (newWidth - 1);
@@ -241,11 +245,11 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
             RGBA p12 = pixels[y2][x1];
             RGBA p22 = pixels[y2][x2];
 
-            output[y][x].r = (1-dx)*(1-dy)*p11.r + dx*(1-dy)*p21.r + (1-dx)*dy*p12.r + dx*dy*p22.r;
+            temp[y][x].r = (1-dx)*(1-dy)*p11.r + dx*(1-dy)*p21.r + (1-dx)*dy*p12.r + dx*dy*p22.r;
 
-            output[y][x].g = (1-dx)*(1-dy)*p11.g + dx*(1-dy)*p21.g + (1-dx)*dy*p12.g + dx*dy*p22.g;
+            temp[y][x].g = (1-dx)*(1-dy)*p11.g + dx*(1-dy)*p21.g + (1-dx)*dy*p12.g + dx*dy*p22.g;
 
-            output[y][x].b = (1-dx)*(1-dy)*p11.b + dx*(1-dy)*p21.b + (1-dx)*dy*p12.b + dx*dy*p22.b;
+            temp[y][x].b = (1-dx)*(1-dy)*p11.b + dx*(1-dy)*p21.b + (1-dx)*dy*p12.b + dx*dy*p22.b;
         }
 
         print_progress((float)(y+1)/newHeight);
@@ -258,7 +262,7 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
     }
     free(pixels);
 
-    return output;
+    return temp;
 }
 
 

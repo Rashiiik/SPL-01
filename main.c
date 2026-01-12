@@ -90,21 +90,13 @@ int main(int argc, char *argv[]) {
         }
         
         if (choice == 4) {
-            printf("==========Edge Detection==========\n");
-            printf("[1] Sobel Operator[Needs work]\n");
-            printf("[?] Back\n");
-            printf("==================================\n");
-
-            int subChoice;
-            printf("Enter: ");
-            scanf("%d", &subChoice);
-
-            if (subChoice == 1) {
-                convertToGrayscale(pixels, width, height);
-                gaussianBlur(pixels, width, height, 1);
-                sobelOperator(pixels, width, height, 100);
-                writeBmp(argv[2], pixels, width, height);
-            }
+            
+            printf("Detecting Edges using Sobel Operator...\n");
+            convertToGrayscale(pixels, width, height);
+            //gaussianBlur(pixels, width, height, 1);
+            sobelOperator(pixels, width, height, 100);
+            writeBmp(argv[2], pixels, width, height);
+            
         }
         else if (choice == 5) {
             printf("============Utilites==============\n");
