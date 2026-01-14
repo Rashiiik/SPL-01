@@ -6,10 +6,8 @@ SRC_DIR = src
 INC_DIR = include
 OBJ_DIR = obj
 
-# Source files
 SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/bmp.c $(SRC_DIR)/scaling.c $(SRC_DIR)/denoise.c $(SRC_DIR)/sharpen.c $(SRC_DIR)/edge.c $(SRC_DIR)/utils.c
 
-# Object files
 OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/bmp.o $(OBJ_DIR)/scaling.o $(OBJ_DIR)/denoise.o $(OBJ_DIR)/sharpen.o $(OBJ_DIR)/edge.o $(OBJ_DIR)/utils.o
 
 all: $(OBJ_DIR) $(TARGET)

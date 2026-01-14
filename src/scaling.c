@@ -3,32 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void transpose(RGBA **pixels, int width, int height) {
-    RGBA **temp = malloc(width*(sizeof(RGBA *)));
-
-    for (int i = 0; i < width; i++) {
-        temp[i] = malloc(height*(sizeof(RGBA)));
-    }
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            temp[x][y] = pixels[y][x];
-        }
-    }
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            pixels[y][x] = temp[y][x];
-        }
-    }
-
-    for (int i = 0; i < height; i++) 
-    {
-        free(temp[i]);
-    }
-    free(temp);
-}
-
 RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight) {
     printf("Resizing Image using Bilinear Interpolation...\n");
 

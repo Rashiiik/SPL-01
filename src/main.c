@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
         else if (choice == 6) {
             printf("============BMP Info===============\n");
             //RGBA **temp;
-            //temp = bilinearInterpolation(pixels, width, height, 96, 48);            
+            //temp = bilinearInterpolation(pixels, width, height, 96, 48); Doesnt work yet :(        
             printf("Input      : %s\n", argv[1]);
             printf("Width      : %d\n", width);
             printf("Height     : %d\n", height);
