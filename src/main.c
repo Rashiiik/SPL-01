@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "bmp.h"
-#include "filters.h"
-#include "utils.h"
+#include "../include/bmp.h"
+#include "../include/scaling.h"
+#include "../include/denoise.h"
+#include "../include/sharpen.h"
+#include "../include/edge.h"
+#include "../include/utils.h"
 
 int main(int argc, char *argv[]) {
 
@@ -91,12 +94,35 @@ int main(int argc, char *argv[]) {
                 writeBmp(argv[2], pixels, width, height);
             }
         }
-        
-        if (choice == 4) {
+        else if (choice == 3)
+        {
+            printf("==========Sharpening==========\n");
+            printf("[1] Unsharp Mask\n");
+            printf("[?] Back\n");
+            printf("==================================\n");
+
+            int subChoice;
+            printf("Enter: ");
+            scanf("%d", &subChoice);
+
+            if (subChoice == 1)
+            {
+                printf("Enter sigma (suggested 1): ");
+                int sigma;
+                scanf("%d", &sigma);
+                printf("Enter amount (suggested 1.5): ");
+                float amount;
+                scanf("%f", &amount);
+                unsharpMask(pixels, width, height, sigma, amount);
+                writeBmp(argv[2], pixels, width, height);
+            }
+            
+        }
+        else if (choice == 4) {
             
             printf("Detecting Edges using Sobel Operator...\n");
             convertToGrayscale(pixels, width, height);
-            //gaussianBlur(pixels, width, height, 1);
+            gaussianBlur(pixels, width, height, 1);
             sobelOperator(pixels, width, height, 100);
             writeBmp(argv[2], pixels, width, height);
             
