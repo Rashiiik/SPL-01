@@ -201,7 +201,8 @@ void transpose(RGBA **pixels, int width, int height) {
         }
     }
 
-    for (int i = 0; i < height; i++) {
+    for (int i = 0; i < height; i++) 
+    {
         free(temp[i]);
     }
     free(temp);
@@ -257,7 +258,8 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
 
     printf("\n");
 
-    for (int i = 0; i < oldHeight; i++) {
+    for (int i = 0; i < oldHeight; i++) 
+    {
         free(pixels[i]);
     }
     free(pixels);
@@ -265,12 +267,117 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
     return temp;
 }
 
+void medianFilter(RGBA **pixels, int width, int height, int kernelSize) {
+
+    if (kernelSize%2== 0)
+    {
+        kernelSize++;
+    }
+    
+    RGBA **output = malloc(height * sizeof(RGBA *));
+    for (int i = 0; i < height; i++) {
+        output[i] = malloc(width * sizeof(RGBA));
+    }
+
+    int center = kernelSize / 2;
+    
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            int rValues[kernelSize * kernelSize];
+            int gValues[kernelSize * kernelSize];
+            int bValues[kernelSize * kernelSize];
+            int count = 0;
+            
+            for (int ky = -center; ky <= center; ky++)
+            {
+                for (int kx = -center; kx <= center; kx++)
+                {
+                    int ny = y + ky;
+                    int nx = x + kx;
+
+                    if (ny < 0) 
+                    {
+                        ny = 0;
+                    }
+                    if (ny >= height) 
+                    {
+                        ny = height - 1;
+                    }
+                    if (nx < 0) 
+                    {
+                        nx = 0;
+                    }
+                    if (nx >= width) 
+                    {
+                        nx = width - 1;
+                    }
+
+                    rValues[count] = pixels[ny][nx].r;
+                    gValues[count] = pixels[ny][nx].g;
+                    bValues[count] = pixels[ny][nx].b;
+                    count++;
+                }
+            }
+
+            // Doing bubble sort to sort the pixel values
+                for (int i = 0; i < count - 1; i++) 
+                {
+                    for (int j = 0; j < count - i - 1; j++) 
+                    {
+                        if (rValues[j] > rValues[j + 1]) 
+                        {
+                            int temp = rValues[j];
+                            rValues[j] = rValues[j + 1];
+                            rValues[j + 1] = temp;
+                        }
+                        if (gValues[j] > gValues[j + 1]) 
+                        {
+                            int temp = gValues[j];
+                            gValues[j] = gValues[j + 1];
+                            gValues[j + 1] = temp;
+                        }
+                        if (bValues[j] > bValues[j + 1]) 
+                        {
+                            int temp = bValues[j];
+                            bValues[j] = bValues[j + 1];
+                            bValues[j + 1] = temp;
+                        }
+                    }
+                }
+                int medianIndex = count / 2;
+                output[y][x].r = rValues[medianIndex];
+                output[y][x].g = gValues[medianIndex];
+                output[y][x].b = bValues[medianIndex];
+        }
+        
+    }
+
+    for (int y = 0; y < height; y++) 
+    {
+        for (int x = 0; x < width; x++) 
+        {
+            pixels[y][x] = output[y][x];
+        }
+    }
+
+    for (int i = 0; i < height; i++) 
+    {
+        free(output[i]);
+    }
+    free(output);
+    
+}
+
 
 void negative(RGBA **pixels, int width, int height) {
     printf("Converting to negative....\n");
 
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
+    for (int y = 0; y < height; y++) 
+    {
+        for (int x = 0; x < width; x++) 
+        {
             pixels[y][x].r = 255 - pixels[y][x].r;
             pixels[y][x].g = 255 - pixels[y][x].g;
             pixels[y][x].b = 255 - pixels[y][x].b;

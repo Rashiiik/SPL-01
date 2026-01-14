@@ -2,19 +2,18 @@
 #include <stdlib.h>
 #include "bmp.h"
 #include "filters.h"
+#include "utils.h"
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
+
+    if (argc < 3) 
+    {
         printf("Usage: %s <input.bmp> <output.bmp>\n", argv[0]);
         return 1;
     }
 
     int width, height, bpp;
     RGBA **pixels = readBmp(argv[1], &width, &height, &bpp);
-
-    if (!pixels) {
-        return 1;
-    }
 
     printf(" ____________________________________________________________________________________________________\n");
     printf("|                                                                                                    |\n");
@@ -59,6 +58,7 @@ int main(int argc, char *argv[]) {
             scanf("%d", &subChoice);
             if (subChoice == 1)
             {
+                printf("Current Resolution: %dx%d\n", width, height);
                 printf("Enter new width: ");
                 scanf("%d", &newWidth);
                 printf("Enter new height: ");
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
         else if (choice == 2)
         {
             printf("==========Denoising==========\n");
-            printf("[1] Gaussian Blur\n");
+            printf("[1] Median Filter\n");
             printf("[?] Back\n");
             printf("==================================\n");
 
@@ -84,7 +84,10 @@ int main(int argc, char *argv[]) {
             scanf("%d", &subChoice);
 
             if (subChoice == 1) {
-                gaussianBlur(pixels, width, height, 1);
+                printf("Please enter the kernel size: ");
+                int kernelSize;
+                scanf("%d", &kernelSize);
+                medianFilter(pixels, width, height, kernelSize);
                 writeBmp(argv[2], pixels, width, height);
             }
         }
@@ -137,6 +140,8 @@ int main(int argc, char *argv[]) {
         }
         else if (choice == 6) {
             printf("============BMP Info===============\n");
+            //RGBA **temp;
+            //temp = bilinearInterpolation(pixels, width, height, 96, 48);            
             printf("Input      : %s\n", argv[1]);
             printf("Width      : %d\n", width);
             printf("Height     : %d\n", height);
