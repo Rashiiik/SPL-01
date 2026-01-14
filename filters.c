@@ -351,6 +351,8 @@ void medianFilter(RGBA **pixels, int width, int height, int kernelSize) {
                 output[y][x].g = gValues[medianIndex];
                 output[y][x].b = bValues[medianIndex];
         }
+        print_progress((float)(y+1)/height);
+        printf("\n");
         
     }
 
