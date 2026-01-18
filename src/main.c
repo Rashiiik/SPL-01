@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "../include/bmp.h"
 #include "../include/scaling.h"
 #include "../include/denoise.h"
@@ -15,8 +16,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    bool devMode = false;
+
     int width, height, bpp;
     RGBA **pixels = readBmp(argv[1], &width, &height, &bpp);
+
+    RGBA **temp = copyImage(pixels, width, height);
+    temp = bilinearInterpolation(temp, width, height, 96, 48, devMode);
 
     printf(" ____________________________________________________________________________________________________\n");
     printf("|                                                                                                    |\n");
@@ -41,7 +47,8 @@ int main(int argc, char *argv[]) {
         printf("[5] Utilities\n");
         printf("[6] Status\n");
         printf("[7] Boost Mode\n");
-        printf("[8] Quit\n");
+        printf("[8] Developer Mode\n");
+        printf("[9] Quit\n");
         printf("==================================\n");
 
         int choice;
@@ -67,7 +74,7 @@ int main(int argc, char *argv[]) {
                 printf("Enter new height: ");
                 scanf("%d", &newHeight);
                 
-                pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight);
+                pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight, devMode);
                 width = newWidth;
                 height = newHeight;
 
@@ -166,8 +173,7 @@ int main(int argc, char *argv[]) {
         }
         else if (choice == 6) {
             printf("============BMP Info===============\n");
-            //RGBA **temp;
-            //temp = bilinearInterpolation(pixels, width, height, 96, 48); Doesnt work yet :(        
+            convertToAscii(temp, 96, 48);      
             printf("Input      : %s\n", argv[1]);
             printf("Width      : %d\n", width);
             printf("Height     : %d\n", height);
@@ -176,6 +182,10 @@ int main(int argc, char *argv[]) {
             printf("Boost Mode : [Lorem ipsum]\n");
         }
         else if (choice == 8) {
+            devMode = true;
+            printf("Developer Mode Activated!\n");
+        }
+        else if (choice == 9) {
             printf("==================================\n");
             break;
         }

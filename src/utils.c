@@ -30,7 +30,7 @@ RGBA **copyImage(RGBA **pixels, int width, int height) {
     return newImage;
 }
 
-/*void convertToAscii(RGBA **pixels, int width, int height) {
+void convertToAscii(RGBA **pixels, int width, int height) {
     const char asciiChar[] = "@%%#*+=-:. ";
     int len = strlen(asciiChar);
 
@@ -41,7 +41,7 @@ RGBA **copyImage(RGBA **pixels, int width, int height) {
         }
         printf("\n");
     }
-}*/
+}
 
 void transpose(RGBA **pixels, int width, int height) {
     RGBA **temp = malloc(width*(sizeof(RGBA *)));

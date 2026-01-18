@@ -2,9 +2,10 @@
 #include "../include/utils.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight) {
-    printf("Resizing Image using Bilinear Interpolation...\n");
+RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, bool mark) {
+    //printf("Resizing Image using Bilinear Interpolation...\n");
 
     RGBA **temp = malloc(newHeight * sizeof(RGBA *));
     for (int i = 0; i < newHeight; i++) {
@@ -48,7 +49,11 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
             temp[y][x].b = (1-dx)*(1-dy)*p11.b + dx*(1-dy)*p21.b + (1-dx)*dy*p12.b + dx*dy*p22.b;
         }
 
-        print_progress((float)(y+1)/newHeight);
+        if (mark == true)
+        {
+            print_progress((float)(y+1)/newHeight);
+        }
+
     }
 
     printf("\n");
