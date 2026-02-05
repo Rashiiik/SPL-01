@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 #include "../include/bmp.h"
 #include "../include/scaling.h"
 #include "../include/denoise.h"
 #include "../include/sharpen.h"
 #include "../include/edge.h"
 #include "../include/utils.h"
+
 
 int main(int argc, char *argv[]) {
 
@@ -23,6 +25,24 @@ int main(int argc, char *argv[]) {
 
     RGBA **temp = copyImage(pixels, width, height);
     temp = bilinearInterpolation(temp, width, height, 96, 48, devMode);
+
+    clock_t start, end;
+    double cpu_time_used;
+
+    FILE *fp = fopen("Log.csv", "r");
+
+    if (fp == NULL) 
+    {
+        fp = fopen("Log.csv", "a");
+        fprintf(fp, "Operation,Start Time,End Time,CPU Time Used (s)\n");
+    } 
+    else 
+    {
+        fclose(fp);
+        fp = fopen("Log.csv", "a");
+    }
+
+    
 
     printf(" ____________________________________________________________________________________________________\n");
     printf("|                                                                                                    |\n");
@@ -50,6 +70,7 @@ int main(int argc, char *argv[]) {
         printf("[8] Developer Mode\n");
         printf("[9] Quit\n");
         printf("==================================\n");
+        fflush(fp);
 
         int choice;
         printf("Enter: ");
@@ -73,10 +94,17 @@ int main(int argc, char *argv[]) {
                 scanf("%d", &newWidth);
                 printf("Enter new height: ");
                 scanf("%d", &newHeight);
-                
+
+                start = clock();
                 pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight, devMode);
                 width = newWidth;
                 height = newHeight;
+                end = clock();
+                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                printf("Time taken for bilinear interpolation: %f seconds\n", cpu_time_used);
+
+                fprintf(fp, "Bilinear Interpolation,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
+
 
                 writeBmp(argv[2], pixels, width, height);
             }
@@ -97,7 +125,12 @@ int main(int argc, char *argv[]) {
                 printf("Please enter the kernel size: ");
                 int kernelSize;
                 scanf("%d", &kernelSize);
+                start = clock();
                 medianFilter(pixels, width, height, kernelSize);
+                end = clock();
+                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                printf("Time taken for median filter: %f seconds\n", cpu_time_used);
+                fprintf(fp, "Median Filter,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
                 writeBmp(argv[2], pixels, width, height);
             }
         }
@@ -120,7 +153,12 @@ int main(int argc, char *argv[]) {
                 printf("Enter amount (suggested 1.5): ");
                 float amount;
                 scanf("%f", &amount);
+                start = clock();
                 unsharpMask(pixels, width, height, sigma, amount);
+                end = clock();
+                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                printf("Time taken for unsharp mask: %f seconds\n", cpu_time_used);
+                fprintf(fp, "Unsharp Mask,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
                 writeBmp(argv[2], pixels, width, height);
             }
             
@@ -128,9 +166,14 @@ int main(int argc, char *argv[]) {
         else if (choice == 4) {
             
             printf("Detecting Edges using Sobel Operator...\n");
+            start = clock();
             convertToGrayscale(pixels, width, height);
             gaussianBlur(pixels, width, height, 1);
             sobelOperator(pixels, width, height, 100);
+            end = clock();
+            cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+            printf("Time taken for Sobel Operator: %f seconds\n", cpu_time_used);
+            fprintf(fp, "Sobel Operator,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
             writeBmp(argv[2], pixels, width, height);
             
         }
