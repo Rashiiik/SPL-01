@@ -180,11 +180,24 @@ int main(int argc, char *argv[]) {
         else if (choice == 4) {
             
             printf("Detecting Edges using Sobel Operator...\n");
-            start = clock();
-            convertToGrayscale(pixels, width, height);
-            gaussianBlur(pixels, width, height, 1);
-            sobelOperator(pixels, width, height, 100);
-            end = clock();
+
+            if (multithreading == false)
+            {
+                start = clock();
+                convertToGrayscale(pixels, width, height);
+                gaussianBlur(pixels, width, height, 1);
+                sobelOperator(pixels, width, height, 100);
+                end = clock();
+            }
+            else
+            {
+                start = clock();
+                multithreadedGrayscaling(pixels, width, height);
+                gaussianBlur(pixels, width, height, 1);
+                multithreadedSobel(pixels, width, height, 100);
+                end = clock();                
+            }
+            
             cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
             printf("Time taken for Sobel Operator: %f seconds\n", cpu_time_used);
             fprintf(fp, "Sobel Operator,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);

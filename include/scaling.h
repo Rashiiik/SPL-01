@@ -15,7 +15,7 @@ typedef struct
 
     int startRow, endRow;
 
-} ThreadData;
+} ThreadData1;
 
 
 RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, bool mark);

@@ -10,7 +10,7 @@
 
 void *bilinear(void *arg) {
 
-    ThreadData *data = (ThreadData*)arg;
+    ThreadData1 *data = (ThreadData1*)arg;
 
     for (int y = data->startRow; y < data->endRow; y++)
     {
@@ -124,7 +124,7 @@ RGBA **multithreadedBilinearInterpolation(RGBA **pixels, int oldWidth, int oldHe
     }
 
     pthread_t threads[NUM_THREADS];
-    ThreadData data[NUM_THREADS];
+    ThreadData1 data[NUM_THREADS];
 
     int chunks = newHeight/NUM_THREADS;
 
