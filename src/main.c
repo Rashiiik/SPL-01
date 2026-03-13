@@ -28,15 +28,14 @@ int main(int argc, char *argv[]) {
     RGBA **temp = copyImage(pixels, width, height);
     temp = bilinearInterpolation(temp, width, height, 96, 48, devMode);
 
-    clock_t start, end;
-    double cpu_time_used;
+    struct timespec start, end;
 
     FILE *fp = fopen("Log.csv", "r");
 
     if (fp == NULL) 
     {
         fp = fopen("Log.csv", "a");
-        fprintf(fp, "Operation,Start Time,End Time,CPU Time Used (s)\n");
+        fprintf(fp, "Operation,Time Taken (s)\n");
     } 
     else 
     {
@@ -98,23 +97,23 @@ int main(int argc, char *argv[]) {
 
                 if (multithreading == false)
                 {
-                    start = clock();
+                    clock_gettime(CLOCK_MONOTONIC, &start);
                     pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight, devMode);
-                    end = clock();
+                    clock_gettime(CLOCK_MONOTONIC, &end);
                 }
                 else
                 {
-                    start = clock();
+                    clock_gettime(CLOCK_MONOTONIC, &start);
                     pixels = multithreadedBilinearInterpolation(pixels, width, height, newWidth, newHeight);
-                    end = clock();
+                    clock_gettime(CLOCK_MONOTONIC, &end);
                 }
                 
                 width = newWidth;
                 height = newHeight;
-                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-                printf("Time taken for bilinear interpolation: %f seconds\n", cpu_time_used);
+                double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Time taken for bilinear interpolation: %lf seconds\n", elapsed);
 
-                fprintf(fp, "Bilinear Interpolation,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
+                fprintf(fp, "Bilinear Interpolation,%lf\n", elapsed);
 
                 writeBmp(argv[2], pixels, width, height);
             }
@@ -139,12 +138,12 @@ int main(int argc, char *argv[]) {
                 printf("Please enter the kernel size: ");
                 int kernelSize;
                 scanf("%d", &kernelSize);
-                start = clock();
+                clock_gettime(CLOCK_MONOTONIC, &start);
                 medianFilter(pixels, width, height, kernelSize);
-                end = clock();
-                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-                printf("Time taken for median filter: %f seconds\n", cpu_time_used);
-                fprintf(fp, "Median Filter,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Time taken for median filter: %lf seconds\n", elapsed);
+                fprintf(fp, "Median Filter,%lf\n", elapsed);
                 writeBmp(argv[2], pixels, width, height);
             }
         }
@@ -167,12 +166,12 @@ int main(int argc, char *argv[]) {
                 printf("Enter amount (suggested 1.5): ");
                 float amount;
                 scanf("%f", &amount);
-                start = clock();
+                clock_gettime(CLOCK_MONOTONIC, &start);
                 unsharpMask(pixels, width, height, sigma, amount);
-                end = clock();
-                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-                printf("Time taken for unsharp mask: %f seconds\n", cpu_time_used);
-                fprintf(fp, "Unsharp Mask,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Time taken for unsharp mask: %lf seconds\n", elapsed);
+                fprintf(fp, "Unsharp Mask,%lf\n", elapsed);
                 writeBmp(argv[2], pixels, width, height);
             }
             
@@ -183,24 +182,24 @@ int main(int argc, char *argv[]) {
 
             if (multithreading == false)
             {
-                start = clock();
+                clock_gettime(CLOCK_MONOTONIC, &start);
                 convertToGrayscale(pixels, width, height);
                 gaussianBlur(pixels, width, height, 1);
-                sobelOperator(pixels, width, height, 100);
-                end = clock();
+                sobelOperator(pixels, width, height);
+                clock_gettime(CLOCK_MONOTONIC, &end);
             }
             else
             {
-                start = clock();
+                clock_gettime(CLOCK_MONOTONIC, &start);
                 multithreadedGrayscaling(pixels, width, height);
-                gaussianBlur(pixels, width, height, 1);
-                multithreadedSobel(pixels, width, height, 100);
-                end = clock();                
+                multithreadedGaussian(pixels, width, height, 1);
+                multithreadedSobel(pixels, width, height);
+                clock_gettime(CLOCK_MONOTONIC, &end);               
             }
             
-            cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-            printf("Time taken for Sobel Operator: %f seconds\n", cpu_time_used);
-            fprintf(fp, "Sobel Operator,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
+            double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+            printf("Time taken for Sobel Operator: %lf seconds\n", elapsed);
+            fprintf(fp, "Sobel Operator,%lf\n", elapsed);
             writeBmp(argv[2], pixels, width, height);
             
         }
@@ -222,11 +221,27 @@ int main(int argc, char *argv[]) {
             }
 
             if (subChoice == 1) {
-                convertToGrayscale(pixels, width, height);
+                if (multithreading == false)
+                {
+                    convertToGrayscale(pixels, width, height);
+                }
+                else
+                {
+                    multithreadedGrayscaling(pixels, width, height);
+                }            
+                
                 writeBmp(argv[2], pixels, width, height);
             }
             else if (subChoice == 2) {
-                gaussianBlur(pixels, width, height, 1);
+                if (multithreading == false)
+                {
+                    gaussianBlur(pixels, width, height, 1);
+                }
+                else
+                {
+                    multithreadedGaussian(pixels, width, height, 1);
+                }
+                
                 writeBmp(argv[2], pixels, width, height);
             }
             else if (subChoice == 3) {

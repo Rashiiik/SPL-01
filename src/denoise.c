@@ -1,20 +1,85 @@
 #include "../include/denoise.h"
 #include "../include/utils.h"
+#include "../include/enum.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <pthread.h>
+
+#define NUM_THREADS 20
+
+void *gaussianWorkerHorizontal(void *arg) {
+
+    ThreadData *data = (ThreadData*) arg;
+
+    for (int y = data->startRow; y < data->endRow; y++) {
+        for (int x = 0; x < data->width; x++) {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            for (int i = 0; i < data->kernelSize; i++) {
+                int dx = i - data->center;
+                int nx = x + dx;
+
+                if (nx < 0) nx = 0;
+                if (nx >= data->width) nx = data->width-1;
+                
+                sumR = sumR + data->kernel[i]*data->pixels[y][nx].r;
+                sumG = sumG + data->kernel[i]*data->pixels[y][nx].g;
+                sumB = sumB + data->kernel[i]*data->pixels[y][nx].b;
+            }
+
+            data->temp[y][x].r = sumR;
+            data->temp[y][x].g = sumG;
+            data->temp[y][x].b = sumB;
+        }
+    }
+
+    
+    return NULL;
+
+}
+
+void *gaussianWorkerVertical(void *arg) {
+
+    ThreadData *data = (ThreadData*) arg;
+
+    for (int y = data->startRow; y < data->endRow; y++) {
+        for (int x = 0; x < data->width; x++) {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            for (int i = 0; i < data->kernelSize; i++) {
+                int dy = i - data->center;
+                int ny = y + dy;
+
+                if (ny < 0) ny = 0;
+                if (ny >= data->height) ny = data->height-1;
+                
+                sumR = sumR + data->kernel[i]*data->temp[ny][x].r;
+                sumG = sumG + data->kernel[i]*data->temp[ny][x].g;
+                sumB = sumB + data->kernel[i]*data->temp[ny][x].b;
+            }
+
+            data->pixels[y][x].r = round(sumR);
+            data->pixels[y][x].g = round(sumG);
+            data->pixels[y][x].b = round(sumB);
+        }
+    }
+
+    return NULL;
+}
 
 void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
+
     int kernelSize = ceil(6*sigma + 1);
 
     if (kernelSize % 2 == 0) {
         kernelSize++;
     }
 
-    float kernel[kernelSize];
+    float *kernel = malloc(kernelSize * sizeof(float));
     int center = kernelSize/2;
     float sum = 0;
-
+    
     RGBA **temp = malloc(height * sizeof(RGBA *));
     for (int i = 0; i < height; i++) {
         temp[i] = malloc(width * sizeof(RGBA));
@@ -87,6 +152,91 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
         free(temp[i]);
     }
     free(temp);
+    free(kernel);
+}
+
+void multithreadedGaussian(RGBA **pixels, int width, int height, int sigma) {
+
+    pthread_t threads[NUM_THREADS];
+    ThreadData data[NUM_THREADS];
+
+    RGBA *tempData = malloc(width * height * sizeof(RGBA));
+    
+    RGBA **temp = malloc(height * sizeof(RGBA *));
+    for (int i = 0; i < height; i++) {
+        temp[i] = tempData + i * width;
+    }
+
+    int kernelSize = ceil(6*sigma + 1);
+
+    if (kernelSize % 2 == 0) {
+        kernelSize++;
+    }
+
+    float kernel[kernelSize];
+
+    int center = kernelSize/2;
+    float sum = 0;
+
+    for (int i = 0; i < kernelSize; i++) {
+        int x = i - center;
+        kernel[i] = exp(-(x*x)/(2*sigma*sigma));
+        sum = sum + kernel[i];
+    }
+
+    for (int i = 0; i < kernelSize; i++) {
+        kernel[i] = kernel[i]/sum;
+    }
+
+    int chunks = height/NUM_THREADS;
+
+    printf("Applying Gaussian Blur...\n");
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        data[i].pixels = pixels;
+        data[i].temp = temp;
+        data[i].width = width;
+        data[i].height = height;
+        data[i].sigma = sigma;
+        data[i].center = center;
+        data[i].kernelSize = kernelSize;
+        data[i].kernel = kernel;
+        data[i].startRow = i*chunks;
+        data[i].endRow = (i+1)*chunks;
+
+        pthread_create(&threads[i], NULL, gaussianWorkerHorizontal, &data[i]);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        data[i].pixels = pixels;
+        data[i].temp = temp;
+        data[i].width = width;
+        data[i].height = height;
+        data[i].sigma = sigma;
+        data[i].center = center;
+        data[i].kernelSize = kernelSize;
+        data[i].kernel = kernel;
+        data[i].startRow = i*chunks;
+        data[i].endRow = (i+1)*chunks;
+
+        pthread_create(&threads[i], NULL, gaussianWorkerVertical, &data[i]);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }
+
+    free(tempData);
+    free(temp);
+    
 }
 
 void medianFilter(RGBA **pixels, int width, int height, int kernelSize) {

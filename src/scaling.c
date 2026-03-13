@@ -1,5 +1,6 @@
 #include "../include/scaling.h"
 #include "../include/utils.h"
+#include "../include/enum.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -10,7 +11,7 @@
 
 void *bilinear(void *arg) {
 
-    ThreadData1 *data = (ThreadData1*)arg;
+    ThreadData *data = (ThreadData*)arg;
 
     for (int y = data->startRow; y < data->endRow; y++)
     {
@@ -118,13 +119,15 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
 
 RGBA **multithreadedBilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight) {
 
+    RGBA *tempData = malloc(newHeight * newWidth * sizeof(RGBA));
+    
     RGBA **temp = malloc(newHeight * sizeof(RGBA *));
     for (int i = 0; i < newHeight; i++) {
-        temp[i] = malloc(newWidth * sizeof(RGBA));
+        temp[i] = tempData + i * newWidth;
     }
 
     pthread_t threads[NUM_THREADS];
-    ThreadData1 data[NUM_THREADS];
+    ThreadData data[NUM_THREADS];
 
     int chunks = newHeight/NUM_THREADS;
 
@@ -152,7 +155,6 @@ RGBA **multithreadedBilinearInterpolation(RGBA **pixels, int oldWidth, int oldHe
         pthread_join(threads[i], NULL);
     }
     
-
     for (int i = 0; i < oldHeight; i++) 
     {
         free(pixels[i]);
