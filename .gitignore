@@ -1,4 +1,4 @@
 *.o
 *.exe
-output.bmp
+output*
 .vscode/

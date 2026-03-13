@@ -1,2 +1,10 @@
 Operation,Start Time,End Time,CPU Time Used (s)
 Bilinear Interpolation,0.002096,0.750656,0.748560
+Bilinear Interpolation,31.748000,32.903000,1.155000
+Bilinear Interpolation,9.007000,9.846000,0.839000
+Bilinear Interpolation,12.013000,24.556000,12.543000
+Bilinear Interpolation,7.068000,7.826000,0.758000
+Bilinear Interpolation,12.386000,12.620000,0.234000
+Bilinear Interpolation,11.780000,24.633000,12.853000
+Bilinear Interpolation,10.094000,10.247000,0.153000
+Bilinear Interpolation,9.174000,9.270000,0.096000

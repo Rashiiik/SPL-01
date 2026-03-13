@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+
+
 void convertToGrayscale(RGBA **pixels, int width, int height) {
 
     printf("Converting to Grayscale\n");

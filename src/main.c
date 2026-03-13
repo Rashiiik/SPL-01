@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
 #include "../include/bmp.h"
 #include "../include/scaling.h"
 #include "../include/denoise.h"
 #include "../include/sharpen.h"
 #include "../include/edge.h"
 #include "../include/utils.h"
-
 
 int main(int argc, char *argv[]) {
 
@@ -19,6 +19,8 @@ int main(int argc, char *argv[]) {
     }
 
     bool devMode = false;
+
+    bool multithreading = false;
 
     int width, height, bpp;
     RGBA **pixels = readBmp(argv[1], &width, &height, &bpp);
@@ -40,9 +42,7 @@ int main(int argc, char *argv[]) {
     {
         fclose(fp);
         fp = fopen("Log.csv", "a");
-    }
-
-    
+    }    
 
     printf(" ____________________________________________________________________________________________________\n");
     printf("|                                                                                                    |\n");
@@ -81,7 +81,8 @@ int main(int argc, char *argv[]) {
             int newWidth, newHeight;
             printf("==========Upscaling/Downscaling==========\n");
             printf("[1] Bilinear Interpolation\n");
-            printf("[?] Back\n");
+            printf("[2] Lanczos\n");
+            printf("[3] Back\n");
             printf("==================================\n");
 
             int subChoice;
@@ -95,18 +96,31 @@ int main(int argc, char *argv[]) {
                 printf("Enter new height: ");
                 scanf("%d", &newHeight);
 
-                start = clock();
-                pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight, devMode);
+                if (multithreading == false)
+                {
+                    start = clock();
+                    pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight, devMode);
+                    end = clock();
+                }
+                else
+                {
+                    start = clock();
+                    pixels = multithreadedBilinearInterpolation(pixels, width, height, newWidth, newHeight);
+                    end = clock();
+                }
+                
                 width = newWidth;
                 height = newHeight;
-                end = clock();
                 cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
                 printf("Time taken for bilinear interpolation: %f seconds\n", cpu_time_used);
 
                 fprintf(fp, "Bilinear Interpolation,%lf,%lf,%lf\n", (double)start/CLOCKS_PER_SEC, (double)end/CLOCKS_PER_SEC, cpu_time_used);
 
-
                 writeBmp(argv[2], pixels, width, height);
+            }
+            else if (subChoice == 2)
+            {
+                printf("Work in progress\n");
             }
 
         }
@@ -224,6 +238,25 @@ int main(int argc, char *argv[]) {
             printf("Output     : %s\n", argv[2]);
             printf("Boost Mode : [Lorem ipsum]\n");
         }
+        else if (choice == 7)
+        {
+            printf("============BOOST MODE===============\n");
+            printf("WARNING! WARNING! WARNING!\n");
+            printf("Multithreading has been enabled\n");
+            printf("==================================\n");
+
+            if (multithreading == false)
+            {
+                multithreading = true;
+            }
+            else
+            {
+                multithreading = false;
+            }
+            
+            
+        }
+        
         else if (choice == 8) {
             devMode = true;
             printf("Developer Mode Activated!\n");
