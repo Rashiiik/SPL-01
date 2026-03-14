@@ -54,7 +54,7 @@ void *bilinear(void *arg) {
     return NULL;
 }
 
-RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, bool mark) {
+RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight) {
     //printf("Resizing Image using Bilinear Interpolation...\n");
 
     RGBA **temp = malloc(newHeight * sizeof(RGBA *));
@@ -99,10 +99,9 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
             temp[y][x].b = (1-dx)*(1-dy)*p11.b + dx*(1-dy)*p21.b + (1-dx)*dy*p12.b + dx*dy*p22.b;
         }
 
-        if (mark == true)
-        {
-            print_progress((float)(y+1)/newHeight);
-        }
+        
+        print_progress((float)(y+1)/newHeight);
+        
 
     }
 

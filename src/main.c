@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    bool devMode = false;
 
     bool multithreading = false;
 
@@ -26,7 +25,7 @@ int main(int argc, char *argv[]) {
     RGBA **pixels = readBmp(argv[1], &width, &height, &bpp);
 
     RGBA **temp = copyImage(pixels, width, height);
-    temp = bilinearInterpolation(temp, width, height, 96, 48, devMode);
+    temp = bilinearInterpolation(temp, width, height, 96, 48);
 
     struct timespec start, end;
 
@@ -65,9 +64,8 @@ int main(int argc, char *argv[]) {
         printf("[4] Edge Detection\n");
         printf("[5] Utilities\n");
         printf("[6] Status\n");
-        printf("[7] Boost Mode\n");
-        printf("[8] Developer Mode\n");
-        printf("[9] Quit\n");
+        printf("[7] Performance Enhancements\n");
+        printf("[8] Quit\n");
         printf("==================================\n");
         fflush(fp);
 
@@ -98,7 +96,7 @@ int main(int argc, char *argv[]) {
                 if (multithreading == false)
                 {
                     clock_gettime(CLOCK_MONOTONIC, &start);
-                    pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight, devMode);
+                    pixels = bilinearInterpolation(pixels, width, height, newWidth, newHeight);
                     clock_gettime(CLOCK_MONOTONIC, &end);
                 }
                 else
@@ -138,9 +136,20 @@ int main(int argc, char *argv[]) {
                 printf("Please enter the kernel size: ");
                 int kernelSize;
                 scanf("%d", &kernelSize);
-                clock_gettime(CLOCK_MONOTONIC, &start);
-                medianFilter(pixels, width, height, kernelSize);
-                clock_gettime(CLOCK_MONOTONIC, &end);
+
+                if (multithreading == false)
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    medianFilter(pixels, width, height, kernelSize);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                else
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    multithreadedMedian(pixels, width, height, kernelSize);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                
                 double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
                 printf("Time taken for median filter: %lf seconds\n", elapsed);
                 fprintf(fp, "Median Filter,%lf\n", elapsed);
@@ -166,9 +175,20 @@ int main(int argc, char *argv[]) {
                 printf("Enter amount (suggested 1.5): ");
                 float amount;
                 scanf("%f", &amount);
-                clock_gettime(CLOCK_MONOTONIC, &start);
-                unsharpMask(pixels, width, height, sigma, amount);
-                clock_gettime(CLOCK_MONOTONIC, &end);
+
+                if (multithreading == false)
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    unsharpMask(pixels, width, height, sigma, amount);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                else
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    multithreadedUnsharpMask(pixels, width, height, sigma, amount);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                
                 double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
                 printf("Time taken for unsharp mask: %lf seconds\n", elapsed);
                 fprintf(fp, "Unsharp Mask,%lf\n", elapsed);
@@ -284,12 +304,7 @@ int main(int argc, char *argv[]) {
             
             
         }
-        
         else if (choice == 8) {
-            devMode = true;
-            printf("Developer Mode Activated!\n");
-        }
-        else if (choice == 9) {
             printf("==================================\n");
             break;
         }

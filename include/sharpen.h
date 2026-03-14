@@ -4,5 +4,6 @@
 #include "bmp.h"
 
 void unsharpMask(RGBA **pixels, int width, int height, int sigma, float amount);
+void multithreadedUnsharpMask(RGBA **pixels, int width, int height, int sigma, float amount)
 
 #endif

@@ -13,5 +13,6 @@ typedef struct
     int kernelSize;
     float *kernel;
     int center;
+    float amount;
 
 } ThreadData;
