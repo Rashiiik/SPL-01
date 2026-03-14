@@ -6,7 +6,7 @@
 #include <math.h>
 #include <pthread.h>
 
-#define NUM_THREADS 20
+#define NUM_THREADS 8
 
 void *gaussianWorkerHorizontal(void *arg) {
 
@@ -63,6 +63,86 @@ void *gaussianWorkerVertical(void *arg) {
             data->pixels[y][x].g = round(sumG);
             data->pixels[y][x].b = round(sumB);
         }
+    }
+
+    return NULL;
+}
+
+void *medianWorker(void *arg) {
+
+    ThreadData *data = (ThreadData*)arg;
+
+    for (int y = data->startRow; y < data->endRow; y++)
+    {
+        for (int x = 0; x < data->width; x++)
+        {
+            int rValues[data->kernelSize * data->kernelSize];
+            int gValues[data->kernelSize * data->kernelSize];
+            int bValues[data->kernelSize * data->kernelSize];
+            int count = 0;
+            
+            for (int ky = -data->center; ky <= data->center; ky++)
+            {
+                for (int kx = -data->center; kx <= data->center; kx++)
+                {
+                    int ny = y + ky;
+                    int nx = x + kx;
+
+                    if (ny < 0) 
+                    {
+                        ny = 0;
+                    }
+                    if (ny >= data->height) 
+                    {
+                        ny = data->height - 1;
+                    }
+                    if (nx < 0) 
+                    {
+                        nx = 0;
+                    }
+                    if (nx >= data->width) 
+                    {
+                        nx = data->width - 1;
+                    }
+
+                    rValues[count] = data->pixels[ny][nx].r;
+                    gValues[count] = data->pixels[ny][nx].g;
+                    bValues[count] = data->pixels[ny][nx].b;
+                    count++;
+                }
+            }
+
+            // Doing bubble sort to sort the pixel values
+            for (int i = 0; i < count - 1; i++) 
+            {
+                for (int j = 0; j < count - i - 1; j++) 
+                {
+                    if (rValues[j] > rValues[j + 1]) 
+                    {
+                        int temp = rValues[j];
+                        rValues[j] = rValues[j + 1];
+                        rValues[j + 1] = temp;
+                    }
+                    if (gValues[j] > gValues[j + 1]) 
+                    {
+                        int temp = gValues[j];
+                        gValues[j] = gValues[j + 1];
+                        gValues[j + 1] = temp;
+                    }
+                    if (bValues[j] > bValues[j + 1]) 
+                    {
+                        int temp = bValues[j];
+                        bValues[j] = bValues[j + 1];
+                        bValues[j + 1] = temp;
+                    }
+                }
+            }
+            int medianIndex = count / 2;
+            data->temp[y][x].r = rValues[medianIndex];
+            data->temp[y][x].g = gValues[medianIndex];
+            data->temp[y][x].b = bValues[medianIndex];
+        }
+        
     }
 
     return NULL;
@@ -246,9 +326,9 @@ void medianFilter(RGBA **pixels, int width, int height, int kernelSize) {
         kernelSize++;
     }
     
-    RGBA **output = malloc(height * sizeof(RGBA *));
+    RGBA **temp = malloc(height * sizeof(RGBA *));
     for (int i = 0; i < height; i++) {
-        output[i] = malloc(width * sizeof(RGBA));
+        temp[i] = malloc(width * sizeof(RGBA));
     }
 
     int center = kernelSize / 2;
@@ -294,34 +374,34 @@ void medianFilter(RGBA **pixels, int width, int height, int kernelSize) {
             }
 
             // Doing bubble sort to sort the pixel values
-                for (int i = 0; i < count - 1; i++) 
+            for (int i = 0; i < count - 1; i++) 
+            {
+                for (int j = 0; j < count - i - 1; j++) 
                 {
-                    for (int j = 0; j < count - i - 1; j++) 
+                    if (rValues[j] > rValues[j + 1]) 
                     {
-                        if (rValues[j] > rValues[j + 1]) 
-                        {
-                            int temp = rValues[j];
-                            rValues[j] = rValues[j + 1];
-                            rValues[j + 1] = temp;
-                        }
-                        if (gValues[j] > gValues[j + 1]) 
-                        {
-                            int temp = gValues[j];
-                            gValues[j] = gValues[j + 1];
-                            gValues[j + 1] = temp;
-                        }
-                        if (bValues[j] > bValues[j + 1]) 
-                        {
-                            int temp = bValues[j];
-                            bValues[j] = bValues[j + 1];
-                            bValues[j + 1] = temp;
-                        }
+                        int temp = rValues[j];
+                        rValues[j] = rValues[j + 1];
+                        rValues[j + 1] = temp;
+                    }
+                    if (gValues[j] > gValues[j + 1]) 
+                    {
+                        int temp = gValues[j];
+                        gValues[j] = gValues[j + 1];
+                        gValues[j + 1] = temp;
+                    }
+                    if (bValues[j] > bValues[j + 1]) 
+                    {
+                        int temp = bValues[j];
+                        bValues[j] = bValues[j + 1];
+                        bValues[j + 1] = temp;
                     }
                 }
-                int medianIndex = count / 2;
-                output[y][x].r = rValues[medianIndex];
-                output[y][x].g = gValues[medianIndex];
-                output[y][x].b = bValues[medianIndex];
+            }
+            int medianIndex = count / 2;
+            temp[y][x].r = rValues[medianIndex];
+            temp[y][x].g = gValues[medianIndex];
+            temp[y][x].b = bValues[medianIndex];
         }
         print_progress((float)(y+1)/height);
         printf("\n");
@@ -332,14 +412,65 @@ void medianFilter(RGBA **pixels, int width, int height, int kernelSize) {
     {
         for (int x = 0; x < width; x++) 
         {
-            pixels[y][x] = output[y][x];
+            pixels[y][x] = temp[y][x];
         }
     }
 
     for (int i = 0; i < height; i++) 
     {
-        free(output[i]);
+        free(temp[i]);
     }
-    free(output);
+    free(temp);
     
+}
+
+void multithreadedMedian(RGBA **pixels, int width, int height, int kernelSize) {
+
+    pthread_t threads[NUM_THREADS];
+    ThreadData data[NUM_THREADS];
+
+    RGBA *tempData = malloc(width * height * sizeof(RGBA));
+    
+    RGBA **temp = malloc(height * sizeof(RGBA *));
+    for (int i = 0; i < height; i++) {
+        temp[i] = tempData + i * width;
+    }
+
+    if (kernelSize%2== 0)
+    {
+        kernelSize++;
+    }
+
+    int center = kernelSize / 2;
+
+    int chunks = height/NUM_THREADS;
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        data[i].pixels = pixels;
+        data[i].temp = temp;
+        data[i].width = width;
+        data[i].height = height;
+        data[i].kernelSize = kernelSize;
+        data[i].startRow = i*chunks;
+        data[i].endRow = (i+1)*chunks;
+
+        pthread_create(&threads[i], NULL, medianWorker, &data[i]);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }
+    
+    for (int y = 0; y < height; y++) 
+    {
+        for (int x = 0; x < width; x++) 
+        {
+            pixels[y][x] = temp[y][x];
+        }
+    }
+
+    free(tempData);
+    free(temp);
 }

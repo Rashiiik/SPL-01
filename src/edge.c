@@ -6,7 +6,7 @@
 #include <math.h>
 #include <pthread.h>
 
-#define NUM_THREADS 20
+#define NUM_THREADS 8
 
 int Gx[3][3] = { 
     {-1, 0, 1},
