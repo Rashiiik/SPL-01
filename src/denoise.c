@@ -450,6 +450,7 @@ void multithreadedMedian(RGBA **pixels, int width, int height, int kernelSize) {
         data[i].pixels = pixels;
         data[i].temp = temp;
         data[i].width = width;
+        data[i].center = center;
         data[i].height = height;
         data[i].kernelSize = kernelSize;
         data[i].startRow = i*chunks;
