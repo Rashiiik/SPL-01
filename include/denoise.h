@@ -7,5 +7,6 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma);
 void multithreadedGaussian(RGBA **pixels, int width, int height, int sigma);
 void medianFilter(RGBA **pixels, int width, int height, int kernelSize);
 void multithreadedMedian(RGBA **pixels, int width, int height, int kernelSize);
+void multithreadedGaussianAVX(RGBA **pixels, int width, int height, int sigma);
 
 #endif

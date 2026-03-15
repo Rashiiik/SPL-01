@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
 
         if (choice == 1)
         {
+            int radius;
             int newWidth, newHeight;
             printf("==========Upscaling/Downscaling==========\n");
             printf("[1] Bilinear Interpolation\n");
@@ -117,7 +118,38 @@ int main(int argc, char *argv[]) {
             }
             else if (subChoice == 2)
             {
-                printf("Work in progress\n");
+                printf("Current Resolution: %dx%d\n", width, height);
+                printf("Enter new width: ");
+                scanf("%d", &newWidth);
+                printf("Enter new height: ");
+                scanf("%d", &newHeight);
+
+                printf("Enter the kernel radius (3 recommended or higher for better quality): ");
+                scanf("%d", &radius);
+
+                if (multithreading == false)
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    pixels = lanczosInterpolation(pixels, width, height, newWidth, newHeight, radius);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                else
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    pixels = multithreadedLanczos(pixels, width, height, newWidth, newHeight, radius);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                
+
+                width = newWidth;
+                height = newHeight;
+                double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Time taken for lanczos interpolation: %lf seconds\n", elapsed);
+
+                fprintf(fp, "Lanczos Interpolation,%lf\n", elapsed);
+
+                writeBmp(argv[2], pixels, width, height);
+                
             }
 
         }
@@ -253,6 +285,7 @@ int main(int argc, char *argv[]) {
                 writeBmp(argv[2], pixels, width, height);
             }
             else if (subChoice == 2) {
+
                 if (multithreading == false)
                 {
                     gaussianBlur(pixels, width, height, 1);

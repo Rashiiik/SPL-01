@@ -14,5 +14,6 @@ typedef struct
     float *kernel;
     int center;
     float amount;
+    int radius;
 
 } ThreadData;
