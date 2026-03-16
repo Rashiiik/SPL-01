@@ -475,3 +475,105 @@ void multithreadedMedian(RGBA **pixels, int width, int height, int kernelSize) {
     free(tempData);
     free(temp);
 }
+
+void nonLocalMeans(RGBA **pixels, int width, int height, int searchRadius, int patchRadius) {
+
+    RGBA **temp = malloc(height * sizeof(RGBA *));    
+
+    for (int i = 0; i < height; i++)
+    {
+        temp[i] = malloc(width * sizeof(RGBA));
+    }
+
+    int patchSize = (2 * patchRadius + 1) * (2 * patchRadius + 1);
+
+    float h = 0.20f;  
+    
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            float weightSum = 0;
+
+            for (int j = -searchRadius; j <= searchRadius; j++)
+            {
+                for (int i = -searchRadius; i <= searchRadius; i++)
+                {
+                    int ny = j + y;
+                    int nx = i + x;
+
+                    if (ny < 0) 
+                    {
+                        ny = 0;
+                    }
+                    if (ny >= height) 
+                    {
+                        ny = height - 1;
+                    }
+                    if (nx < 0) 
+                    {
+                        nx = 0;
+                    }
+                    if (nx >= width) 
+                    {
+                        nx = width - 1;
+                    }
+
+                    float distance = 0;
+
+                    for (int py = -patchRadius; py <= patchRadius; py++)
+                    {
+                        for (int px = -patchRadius; px <= patchRadius; px++)
+                        {
+                            int p1x = x + px;
+                            int p1y = y + py;
+                            int p2x = nx + px;
+                            int p2y = ny + py;
+
+                            if (p1x >= 0 && p1x < width && p1y >= 0 && p1y < height && p2x >= 0 && p2x < width && p2y >= 0 && p2y < height)
+                            {
+                                float dr = (pixels[p1y][p1x].r - pixels[p2y][p2x].r) / 255.0f;
+                                float dg = (pixels[p1y][p1x].g - pixels[p2y][p2x].g) / 255.0f;
+                                float db = (pixels[p1y][p1x].b - pixels[p2y][p2x].b) / 255.0f;
+                                distance += dr*dr + dg*dg + db*db;
+                            }
+                        }
+                    }
+
+                    distance /= patchSize;  
+
+                    float weight = expf(-distance / (h*h));
+                    sumR += weight * pixels[ny][nx].r;
+                    sumG += weight * pixels[ny][nx].g;
+                    sumB += weight * pixels[ny][nx].b;
+                    weightSum += weight;
+
+                }
+                
+            }
+
+            temp[y][x].r = sumR / weightSum;
+            temp[y][x].g = sumG / weightSum;
+            temp[y][x].b = sumB / weightSum;
+            
+        }
+        
+    }
+
+    for (int y = 0; y < height; y++) 
+    {
+        for (int x = 0; x < width; x++) 
+        {
+            pixels[y][x] = temp[y][x];
+        }
+    }
+
+    for (int i = 0; i < height; i++) 
+    {
+        free(temp[i]);
+    }
+    free(temp);
+    
+}

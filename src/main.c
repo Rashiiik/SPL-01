@@ -157,7 +157,8 @@ int main(int argc, char *argv[]) {
         {
             printf("==========Denoising==========\n");
             printf("[1] Median Filter\n");
-            printf("[?] Back\n");
+            printf("[2] Non Local Means\n");
+            printf("[3] Back\n");
             printf("==================================\n");
 
             int subChoice;
@@ -187,6 +188,34 @@ int main(int argc, char *argv[]) {
                 fprintf(fp, "Median Filter,%lf\n", elapsed);
                 writeBmp(argv[2], pixels, width, height);
             }
+            else if (subChoice == 2)
+            {
+                int searchRadius, patchRadius;
+
+                printf("Enter the search radius (Recommended 10): ");
+                scanf("%d", &searchRadius);
+                printf("Enter the patch radius (Recommended 2): ");
+                scanf("%d", &patchRadius);
+
+                if (multithreading == false)
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    nonLocalMeans(pixels, width, height, searchRadius, patchRadius);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                else
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    //multithreadedMedian(pixels, width, height, kernelSize);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+
+                double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Time taken for non-local means: %lf seconds\n", elapsed);
+                fprintf(fp, "Non-Local Means,%lf\n", elapsed);
+                writeBmp(argv[2], pixels, width, height);
+            }
+            
         }
         else if (choice == 3)
         {
