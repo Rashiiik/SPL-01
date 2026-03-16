@@ -256,58 +256,103 @@ RGBA **multithreadedBilinearInterpolation(RGBA **pixels, int oldWidth, int oldHe
     return temp;
 }
 
-RGBA **lanczosInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius) {
+RGBA **lanczosHorizontal(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius) {
 
-    RGBA **temp = malloc(newHeight * sizeof(RGBA *));
-    for (int i = 0; i < newHeight; i++) {
+    RGBA **temp = malloc(oldHeight * sizeof(RGBA *));
+    for (int i = 0; i < oldHeight; i++) {
         temp[i] = malloc(newWidth * sizeof(RGBA));
     }
 
     float xRatio = (float)(oldWidth - 1) / (newWidth - 1);
-    float yRatio = (float)(oldHeight - 1) / (newHeight - 1);
 
-    for (int y = 0; y < newHeight; y++)
+    for (int y = 0; y < oldHeight; y++)
     {
         for (int x = 0; x < newWidth; x++)
         {
             float sumR = 0, sumG = 0, sumB = 0;
 
             float srcX = x * xRatio;
-            float srcY = y * yRatio;
 
             int baseX = floor(srcX);
-            int baseY = floor(srcY);
-
             float weightSum = 0;
 
-            for (int j = -radius; j <= radius; j++)             
-            {
-                for (int i = -radius; i <= radius; i++)           // For example from -3 to 3 we take kernel of size 7
-                {                                                 // assuming a = 3
-                    int sampleX = baseX + i;            // computing actual coordinates
-                    int sampleY = baseY + j;            // sampleX controls the horizontal part 
+            
+            for (int i = -radius; i <= radius; i++)          
+            {                                                 
+                int sampleX = baseX + i;           
+                if (sampleX < 0) sampleX = 0;
+                if (sampleX >= oldWidth) sampleX = oldWidth - 1;
 
-                    if (sampleX < 0) sampleX = 0;
-                    if (sampleX >= oldWidth) sampleX = oldWidth - 1;
-                    if (sampleY < 0) sampleY = 0;
-                    if (sampleY >= oldHeight) sampleY = oldHeight - 1;
+                float dx = srcX - sampleX;
 
-                    float dx = srcX - sampleX;
-                    float dy = srcY - sampleY;              // The more the value of dx and dy the less they will
-                                                            // affect the weight which is what we want
-                    float weight = lanczos(dx, radius) * lanczos(dy, radius);
+                float weight = lanczos(dx, radius);
 
-                    RGBA temp1 = pixels[sampleY][sampleX];
+                RGBA temp1 = pixels[y][sampleX];
 
-                    sumR += temp1.r * weight;
-                    sumG += temp1.g * weight;
-                    sumB += temp1.b * weight;
+                sumR += temp1.r * weight;
+                sumG += temp1.g * weight;
+                sumB += temp1.b * weight;
 
-                    weightSum += weight;
+                weightSum += weight;
+            }            
 
-                }
-                
+            if (weightSum != 0.0) {
+                temp[y][x].r = (unsigned char)fmin(fmax(sumR / weightSum + 0.5, 0.0), 255.0);
+                temp[y][x].g = (unsigned char)fmin(fmax(sumG / weightSum + 0.5, 0.0), 255.0);
+                temp[y][x].b = (unsigned char)fmin(fmax(sumB / weightSum + 0.5, 0.0), 255.0);
+                temp[y][x].a = 255;
+            } else {
+                temp[y][x].r = temp[y][x].g = temp[y][x].b = 0;
+                temp[y][x].a = 255;
             }
+
+        }
+        
+    }
+
+    return temp;
+
+}
+
+RGBA **lanczosVertical(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius) {
+
+    RGBA **temp = malloc(newHeight * sizeof(RGBA *));
+    for (int i = 0; i < newHeight; i++) {
+        temp[i] = malloc(newWidth * sizeof(RGBA));
+    }
+
+    float yRatio = (float)(oldHeight - 1) / (newHeight - 1);
+
+    for (int y = 0; y < newHeight; y++)
+    {
+        float srcY = y * yRatio;
+        
+        for (int x = 0; x < newWidth; x++)
+        {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            int baseY = floor(srcY);
+            float weightSum = 0;
+
+            
+            for (int j = -radius; j <= radius; j++)          
+            {                                                 
+                int sampleY = baseY + j;           
+                if (sampleY < 0) sampleY = 0;
+                if (sampleY >= oldHeight) sampleY = oldHeight - 1;
+
+                float dy = srcY - sampleY;
+
+                float weight = lanczos(dy, radius);
+
+                RGBA temp1 = pixels[sampleY][x];
+
+                sumR += temp1.r * weight;
+                sumG += temp1.g * weight;
+                sumB += temp1.b * weight;
+
+                weightSum += weight;
+            }            
 
             if (weightSum != 0.0) {
                 temp[y][x].r = (unsigned char)fmin(fmax(sumR / weightSum + 0.5, 0.0), 255.0);
@@ -330,6 +375,15 @@ RGBA **lanczosInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newW
     free(pixels);
 
     return temp;
+
+}
+
+RGBA **lanczosInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius) {
+
+    RGBA **temp = lanczosHorizontal(pixels, oldWidth, oldHeight, newWidth, newHeight, radius);
+    RGBA **output = lanczosVertical(temp, oldWidth, oldHeight, newWidth, newHeight, radius);
+
+    return output;
 
 }
 
