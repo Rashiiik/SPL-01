@@ -15,5 +15,6 @@ typedef struct
     int center;
     float amount;
     int radius;
+    int searchRadius, patchRadius;
 
 } ThreadData;

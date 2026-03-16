@@ -9,5 +9,6 @@ void medianFilter(RGBA **pixels, int width, int height, int kernelSize);
 void multithreadedMedian(RGBA **pixels, int width, int height, int kernelSize);
 void multithreadedGaussianAVX(RGBA **pixels, int width, int height, int sigma);
 void nonLocalMeans(RGBA **pixels, int width, int height, int searchRadius, int patchRadius);
+void multithreadedNLM(RGBA **pixels, int width, int height, int searchRadius, int patchRadius);
 
 #endif

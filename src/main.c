@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
                 else
                 {
                     clock_gettime(CLOCK_MONOTONIC, &start);
-                    //multithreadedMedian(pixels, width, height, kernelSize);
+                    multithreadedNLM(pixels, width, height, searchRadius, patchRadius);
                     clock_gettime(CLOCK_MONOTONIC, &end);
                 }
 

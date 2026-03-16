@@ -67,3 +67,6 @@ Median Filter,1.372156
 Non-Local Means,7.264603
 Non-Local Means,97.487570
 Lanczos Interpolation,0.467627
+Non-Local Means,99.636602
+Sobel Operator,0.008987
+Non-Local Means,17.757256

@@ -148,6 +148,90 @@ void *medianWorker(void *arg) {
     return NULL;
 }
 
+void *nlmWorker(void *arg) {
+
+    ThreadData *data = (ThreadData*)arg;
+
+    int patchSize = (2 * data->patchRadius + 1) * (2 * data->patchRadius + 1);
+
+    float h = 0.20f;
+
+    for (int y = data->startRow; y < data->endRow; y++)
+    {
+        for (int x = 0; x < data->width; x++)
+        {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            float weightSum = 0;
+
+            for (int j = -data->searchRadius; j <= data->searchRadius; j++)
+            {
+                for (int i = -data->searchRadius; i <= data->searchRadius; i++)
+                {
+                    int ny = j + y;
+                    int nx = i + x;
+
+                    if (ny < 0) 
+                    {
+                        ny = 0;
+                    }
+                    if (ny >= data->height) 
+                    {
+                        ny = data->height - 1;
+                    }
+                    if (nx < 0) 
+                    {
+                        nx = 0;
+                    }
+                    if (nx >= data->width) 
+                    {
+                        nx = data->width - 1;
+                    }
+
+                    float distance = 0;
+
+                    for (int py = -data->patchRadius; py <= data->patchRadius; py++)
+                    {
+                        for (int px = -data->patchRadius; px <= data->patchRadius; px++)
+                        {
+                            int p1x = x + px;
+                            int p1y = y + py;
+                            int p2x = nx + px;
+                            int p2y = ny + py;
+
+                            if (p1x >= 0 && p1x < data->width && p1y >= 0 && p1y < data->height && p2x >= 0 && p2x < data->width && p2y >= 0 && p2y < data->height)
+                            {
+                                float dr = (data->pixels[p1y][p1x].r - data->pixels[p2y][p2x].r) / 255.0f;
+                                float dg = (data->pixels[p1y][p1x].g - data->pixels[p2y][p2x].g) / 255.0f;
+                                float db = (data->pixels[p1y][p1x].b - data->pixels[p2y][p2x].b) / 255.0f;
+                                distance += dr*dr + dg*dg + db*db;
+                            }
+                        }
+                    }
+
+                    distance /= patchSize;  
+
+                    float weight = expf(-distance / (h*h));
+                    sumR += weight * data->pixels[ny][nx].r;
+                    sumG += weight * data->pixels[ny][nx].g;
+                    sumB += weight * data->pixels[ny][nx].b;
+                    weightSum += weight;
+
+                }
+                
+            }
+
+            data->temp[y][x].r = sumR / weightSum;
+            data->temp[y][x].g = sumG / weightSum;
+            data->temp[y][x].b = sumB / weightSum;
+            
+        }
+        
+    }
+
+    return NULL;
+}
+
 void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
 
     int kernelSize = ceil(6*sigma + 1);
@@ -576,4 +660,49 @@ void nonLocalMeans(RGBA **pixels, int width, int height, int searchRadius, int p
     }
     free(temp);
     
+}
+
+void multithreadedNLM(RGBA **pixels, int width, int height, int searchRadius, int patchRadius) {
+
+    pthread_t threads[NUM_THREADS];
+    ThreadData data[NUM_THREADS];
+
+    RGBA *tempData = malloc(width * height * sizeof(RGBA));
+    
+    RGBA **temp = malloc(height * sizeof(RGBA *));
+    for (int i = 0; i < height; i++) {
+        temp[i] = tempData + i * width;
+    }
+    
+    int chunks = height/NUM_THREADS;
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        data[i].pixels = pixels;
+        data[i].temp = temp;
+        data[i].width = width;
+        data[i].height = height;
+        data[i].searchRadius = searchRadius;
+        data[i].patchRadius = patchRadius;
+        data[i].startRow = i*chunks;
+        data[i].endRow = (i+1)*chunks;
+
+        pthread_create(&threads[i], NULL, nlmWorker, &data[i]);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }
+
+    for (int y = 0; y < height; y++) 
+    {
+        for (int x = 0; x < width; x++) 
+        {
+            pixels[y][x] = temp[y][x];
+        }
+    }
+
+    free(tempData);
+    free(temp);
 }
