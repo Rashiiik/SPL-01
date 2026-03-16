@@ -82,7 +82,7 @@ void *bilinear(void *arg) {
     return NULL;
 }
 
-void *lanczosWorker(void *arg) {
+void *lanczosWorkerHorizontal(void *arg) {
 
     ThreadData *data = (ThreadData*)arg;
 
@@ -93,40 +93,92 @@ void *lanczosWorker(void *arg) {
             float sumR = 0, sumG = 0, sumB = 0;
 
             float srcX = x * data->xRatio;
-            float srcY = y * data->yRatio;
+            
 
             int baseX = floor(srcX);
+            
+
+            float weightSum = 0;
+
+            for (int i = -data->radius; i <= data->radius; i++)           
+            {                                                 
+                int sampleX = baseX + i;            
+                              
+
+                if (sampleX < 0) sampleX = 0;
+                if (sampleX >= data->oldWidth) sampleX = data->oldWidth - 1;
+                    
+
+                float dx = srcX - sampleX;
+                                  
+                                                            
+                float weight = lanczos(dx, data->radius);
+
+                RGBA temp1 = data->pixels[y][sampleX];
+
+                sumR += temp1.r * weight;
+                sumG += temp1.g * weight;
+                sumB += temp1.b * weight;
+
+                weightSum += weight;
+
+            }
+                
+            
+
+            if (weightSum != 0.0) {
+                data->temp[y][x].r = (unsigned char)fmin(fmax(sumR / weightSum + 0.5, 0.0), 255.0);
+                data->temp[y][x].g = (unsigned char)fmin(fmax(sumG / weightSum + 0.5, 0.0), 255.0);
+                data->temp[y][x].b = (unsigned char)fmin(fmax(sumB / weightSum + 0.5, 0.0), 255.0);
+                data->temp[y][x].a = 255;
+            } else {
+                data->temp[y][x].r = data->temp[y][x].g = data->temp[y][x].b = 0;
+                data->temp[y][x].a = 255;
+            }
+
+        }
+        
+    }
+
+    return NULL;
+
+}
+
+void *lanczosWorkerVertical(void *arg) {
+
+    ThreadData *data = (ThreadData*)arg;
+
+    for (int y = data->startRow; y < data->endRow; y++)
+    {
+        float srcY = y * data->yRatio;
+
+        for (int x = 0; x < data->newWidth; x++)
+        {
+            float sumR = 0, sumG = 0, sumB = 0;
+            
             int baseY = floor(srcY);
 
             float weightSum = 0;
 
             for (int j = -data->radius; j <= data->radius; j++)             
-            {
-                for (int i = -data->radius; i <= data->radius; i++)           
-                {                                                 
-                    int sampleX = baseX + i;            
-                    int sampleY = baseY + j;            
+            {                                                                         
+                int sampleY = baseY + j;            
+  
+                if (sampleY < 0) sampleY = 0;
+                if (sampleY >= data->oldHeight) sampleY = data->oldHeight - 1;
 
-                    if (sampleX < 0) sampleX = 0;
-                    if (sampleX >= data->oldWidth) sampleX = data->oldWidth - 1;
-                    if (sampleY < 0) sampleY = 0;
-                    if (sampleY >= data->oldHeight) sampleY = data->oldHeight - 1;
-
-                    float dx = srcX - sampleX;
-                    float dy = srcY - sampleY;              
+                    
+                float dy = srcY - sampleY;              
                                                             
-                    float weight = lanczos(dx, data->radius) * lanczos(dy, data->radius);
+                float weight = lanczos(dy, data->radius);
 
-                    RGBA temp1 = data->pixels[sampleY][sampleX];
+                RGBA temp1 = data->pixels[sampleY][x];
 
-                    sumR += temp1.r * weight;
-                    sumG += temp1.g * weight;
-                    sumB += temp1.b * weight;
+                sumR += temp1.r * weight;
+                sumG += temp1.g * weight;
+                sumB += temp1.b * weight;
 
-                    weightSum += weight;
-
-                }
-                
+                weightSum += weight;     
             }
 
             if (weightSum != 0.0) {
@@ -148,7 +200,6 @@ void *lanczosWorker(void *arg) {
 }
 
 RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight) {
-    //printf("Resizing Image using Bilinear Interpolation...\n");
 
     RGBA **temp = malloc(newHeight * sizeof(RGBA *));
     for (int i = 0; i < newHeight; i++) {
@@ -389,17 +440,24 @@ RGBA **lanczosInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newW
 
 RGBA **multithreadedLanczos(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius) {
 
-    RGBA *tempData = malloc(newHeight * newWidth * sizeof(RGBA));
+    RGBA *tempData = malloc(oldHeight * newWidth * sizeof(RGBA));
     
-    RGBA **temp = malloc(newHeight * sizeof(RGBA *));
-    for (int i = 0; i < newHeight; i++) {
+    RGBA **temp = malloc(oldHeight * sizeof(RGBA *));
+    for (int i = 0; i < oldHeight; i++) {
         temp[i] = tempData + i * newWidth;
+    }
+
+    RGBA *outData = malloc(newHeight * newWidth * sizeof(RGBA));
+
+    RGBA **output = malloc(newHeight * sizeof(RGBA*));
+    for(int i=0;i<newHeight;i++) {
+        output[i] = outData + i*newWidth;
     }
 
     pthread_t threads[NUM_THREADS];
     ThreadData data[NUM_THREADS];
 
-    int chunks = newHeight/NUM_THREADS;
+    int chunks = oldHeight/NUM_THREADS;
 
     float xRatio = (float)(oldWidth - 1) / (newWidth - 1);
     float yRatio = (float)(oldHeight - 1) / (newHeight - 1);
@@ -418,7 +476,31 @@ RGBA **multithreadedLanczos(RGBA **pixels, int oldWidth, int oldHeight, int newW
         data[i].startRow = i*chunks;
         data[i].endRow = (i+1)*chunks;
 
-        pthread_create(&threads[i], NULL, lanczosWorker, &data[i]);
+        pthread_create(&threads[i], NULL, lanczosWorkerHorizontal, &data[i]);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }
+
+    chunks = newHeight/NUM_THREADS;
+
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        data[i].pixels = temp;
+        data[i].temp = output;
+        data[i].oldHeight = oldHeight;
+        data[i].oldWidth = oldWidth;
+        data[i].radius = radius;
+        data[i].xRatio = xRatio;
+        data[i].yRatio = yRatio;
+        data[i].newHeight = newHeight;
+        data[i].newWidth = newWidth;
+        data[i].startRow = i*chunks;
+        data[i].endRow = (i+1)*chunks;
+
+        pthread_create(&threads[i], NULL, lanczosWorkerVertical, &data[i]);
     }
 
     for (int i = 0; i < NUM_THREADS; i++)
@@ -432,6 +514,9 @@ RGBA **multithreadedLanczos(RGBA **pixels, int oldWidth, int oldHeight, int newW
     }
     free(pixels);
 
-    return temp;
+    free(tempData);
+    free(temp);
+
+    return output;
 
 }
