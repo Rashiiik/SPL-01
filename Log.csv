@@ -89,3 +89,8 @@ Sobel Operator,6.421660
 Sobel Operator,0.035184
 Lanczos Interpolation,0.152974
 Sobel Operator,0.015533
+Unsharp Mask,0.836700
+Laplacian Filter,0.010019
+Laplacian Filter,0.009542
+Laplacian Filter,0.021050
+Laplacian Filter,0.003357

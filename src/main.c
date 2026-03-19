@@ -220,8 +220,9 @@ int main(int argc, char *argv[]) {
         else if (choice == 3)
         {
             printf("==========Sharpening==========\n");
-            printf("[1] Unsharp Mask\n");
-            printf("[?] Back\n");
+            printf("[1] Laplacian Filter\n");
+            printf("[2] Unsharp Mask\n");
+            printf("[3] Back\n");
             printf("==================================\n");
 
             int subChoice;
@@ -229,6 +230,30 @@ int main(int argc, char *argv[]) {
             scanf("%d", &subChoice);
 
             if (subChoice == 1)
+            {
+                printf("Enter amount (suggested 1.5): ");
+                float amount;
+                scanf("%f", &amount);
+
+                if (multithreading == false)
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    laplacianFilter(pixels, width, height, amount);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                else
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start);
+                    multithreadedLaplacian(pixels, width, height, amount);
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                }
+                
+                double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Time taken for Laplacian Filter: %lf seconds\n", elapsed);
+                fprintf(fp, "Laplacian Filter,%lf\n", elapsed);
+                writeBmp(argv[2], pixels, width, height);
+            }
+            else if (subChoice == 2)
             {
                 printf("Enter sigma (suggested 1): ");
                 int sigma;

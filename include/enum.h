@@ -16,5 +16,6 @@ typedef struct
     float amount;
     int radius;
     int searchRadius, patchRadius;
+    float Kernel[3][3];
 
 } ThreadData;
