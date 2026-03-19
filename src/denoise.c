@@ -154,7 +154,7 @@ void *nlmWorker(void *arg) {
 
     int patchSize = (2 * data->patchRadius + 1) * (2 * data->patchRadius + 1);
 
-    float h = 0.20f;
+    float h = 0.175f;
 
     for (int y = data->startRow; y < data->endRow; y++)
     {
@@ -571,7 +571,7 @@ void nonLocalMeans(RGBA **pixels, int width, int height, int searchRadius, int p
 
     int patchSize = (2 * patchRadius + 1) * (2 * patchRadius + 1);
 
-    float h = 0.20f;  
+    float h = 0.175f;  
     
     for (int y = 0; y < height; y++)
     {

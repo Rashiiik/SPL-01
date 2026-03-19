@@ -228,7 +228,7 @@ void multithreadedSobel(RGBA **pixels, int width, int height) {
 
     pthread_mutex_destroy(&maxMagMutex);
 
-    autoThreshold = 0.2f * maxMag;
+    autoThreshold = 0.1f * maxMag;
 
     for (int i = 0; i < NUM_THREADS; i++)
     {
@@ -294,7 +294,7 @@ void sobelOperator(RGBA **pixels, int width, int height) {
         }
     }
 
-    autoThreshold = 0.2f * maxMag;
+    autoThreshold = 0.1f * maxMag;
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {

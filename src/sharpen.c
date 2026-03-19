@@ -59,8 +59,11 @@ void *unsharpWorker(void *arg) {
     return NULL;
 }
 
+void *laplacianWorker(void *arg) {
+    
+}
+
 void unsharpMask(RGBA **pixels, int width, int height, int sigma, float amount) {
-    printf("Applying Unsharp Mask (sigma=%d, amount=%.2f)...\n", sigma, amount);
     
     RGBA **temp = copyImage(pixels, width, height);
     
@@ -124,8 +127,6 @@ void multithreadedUnsharpMask(RGBA **pixels, int width, int height, int sigma, f
 
     pthread_t threads[NUM_THREADS];
     ThreadData data[NUM_THREADS];
-
-    printf("Applying Unsharp Mask (sigma=%d, amount=%.2f)...\n", sigma, amount);
     
     RGBA **temp = copyImage(pixels, width, height);
     
@@ -156,4 +157,100 @@ void multithreadedUnsharpMask(RGBA **pixels, int width, int height, int sigma, f
         free(temp[i]);
     }
     free(temp);
+}
+
+void laplacianFilter(RGBA **pixels, int width, int height, float amount) {
+
+    RGBA **temp = copyImage(pixels, width, height);
+
+    int kernelSize = 3;
+
+    float kernel[3][3] = { 
+        {0, -1, 0},
+        {-1, 4, -1},
+        {0, -1, 0}
+    };
+
+    int center = kernelSize/2;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float sumR = 0, sumG = 0, sumB = 0;
+
+            for (int j = -center; j <= center; j++)
+            {
+                for (int i = -center; i <= center; i++)
+                {
+                    int ny = j + y;
+                    int nx = i + x;
+
+                    if (ny < 0) 
+                    {
+                        ny = 0;
+                    }
+                    if (ny >= height) 
+                    {
+                        ny = height - 1;
+                    }
+                    if (nx < 0) 
+                    {
+                        nx = 0;
+                    }
+                    if (nx >= width) 
+                    {
+                        nx = width - 1;
+                    }
+
+                    sumR += kernel[j+center][i+center] * temp[ny][nx].r;
+                    sumG += kernel[j+center][i+center] * temp[ny][nx].g;
+                    sumB += kernel[j+center][i+center] * temp[ny][nx].b;
+                }
+                
+            }
+            
+            float lapR = sumR;
+            float lapG = sumG;
+            float lapB = sumB;
+
+            int newR = temp[y][x].r + round(amount * lapR);
+            int newG = temp[y][x].g + round(amount * lapG);
+            int newB = temp[y][x].b + round(amount * lapB);       
+
+            if (newR < 0) 
+            {
+                newR = 0;
+            }
+            if (newR > 255) 
+            {
+                newR = 255;
+            }
+            if (newG < 0) 
+            { 
+                newG = 0; 
+            }
+            if (newG > 255) 
+            {
+                newG = 255;
+            }
+            if (newB < 0) 
+            {
+                newB = 0;
+            }
+            if (newB > 255) 
+            {
+                newB = 255;
+            }
+            
+            pixels[y][x].r = (unsigned char)newR;
+            pixels[y][x].g = (unsigned char)newG;
+            pixels[y][x].b = (unsigned char)newB;
+        }
+        
+    }
+
+    for (int i = 0; i < height; i++) {
+        free(temp[i]);
+    }
+    free(temp);
+
 }

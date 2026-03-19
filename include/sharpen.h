@@ -5,5 +5,6 @@
 
 void unsharpMask(RGBA **pixels, int width, int height, int sigma, float amount);
 void multithreadedUnsharpMask(RGBA **pixels, int width, int height, int sigma, float amount);
+void laplacianFilter(RGBA **pixels, int width, int height, float amount);
 
 #endif
