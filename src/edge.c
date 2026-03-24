@@ -155,11 +155,8 @@ void convertToGrayscale(RGBA **pixels, int width, int height) {
             pixels[y][x].g = gray;
             pixels[y][x].b = gray;
         }
-        print_progress((float)(y + 1) / height);
     }
 
-    print_progress(1.0f);
-    printf("\n");
 }
 
 void multithreadedGrayscaling(RGBA **pixels, int width, int height) {
@@ -338,5 +335,4 @@ void sobelOperator(RGBA **pixels, int width, int height) {
     }
     free(temp);
 
-    printf("\n");
 }

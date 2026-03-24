@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 #include <pthread.h>
 #include "../include/bmp.h"
 #include "../include/scaling.h"
@@ -10,13 +11,29 @@
 #include "../include/edge.h"
 #include "../include/utils.h"
 
+volatile bool inputActive = false;
+
+void *usage(void *arg) {
+    while (1) {
+        if (!inputActive) {
+            printf("\r                                                               CPU:  | RAM:  MB");
+            fflush(stdout);
+        }
+        usleep(500000);
+    }
+}
+
 int main(int argc, char *argv[]) {
+
+    pthread_t thread;
 
     if (argc < 3) 
     {
         printf("Usage: %s <input.bmp> <output.bmp>\n", argv[0]);
         return 1;
     }
+
+    pthread_create(&thread, NULL, usage, NULL);
 
 
     bool multithreading = false;
@@ -71,7 +88,9 @@ int main(int argc, char *argv[]) {
 
         int choice;
         printf("Enter: ");
+        inputActive = true;
         scanf("%d", &choice);
+        inputActive = false;
 
         if (choice == 1)
         {
@@ -85,14 +104,18 @@ int main(int argc, char *argv[]) {
 
             int subChoice;
             printf("Enter: ");
+            inputActive = true;
             scanf("%d", &subChoice);
+            inputActive = false;
             if (subChoice == 1)
             {
+                inputActive = true;
                 printf("Current Resolution: %dx%d\n", width, height);
                 printf("Enter new width: ");
                 scanf("%d", &newWidth);
                 printf("Enter new height: ");
                 scanf("%d", &newHeight);
+                inputActive = false;
 
                 if (multithreading == false)
                 {

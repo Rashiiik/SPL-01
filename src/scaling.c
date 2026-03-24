@@ -241,15 +241,9 @@ RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int new
             temp[y][x].g = (1-dx)*(1-dy)*p11.g + dx*(1-dy)*p21.g + (1-dx)*dy*p12.g + dx*dy*p22.g;
 
             temp[y][x].b = (1-dx)*(1-dy)*p11.b + dx*(1-dy)*p21.b + (1-dx)*dy*p12.b + dx*dy*p22.b;
-        }
-
-        
-        print_progress((float)(y+1)/newHeight);
-        
+        }     
 
     }
-
-    printf("\n");
 
     for (int i = 0; i < oldHeight; i++) 
     {

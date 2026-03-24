@@ -190,10 +190,7 @@ void unsharpMask(RGBA **pixels, int width, int height, int sigma, float amount) 
             pixels[y][x].g = (unsigned char)newG;
             pixels[y][x].b = (unsigned char)newB;
         }
-        print_progress((float)(y + 1) / height);
     }
-    
-    printf("\n");
     
     for (int i = 0; i < height; i++) {
         free(temp[i]);

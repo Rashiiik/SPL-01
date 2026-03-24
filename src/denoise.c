@@ -307,10 +307,7 @@ void gaussianBlur(RGBA **pixels, int width, int height, int sigma) {
             pixels[y][x].g = round(sumG);
             pixels[y][x].b = round(sumB);
         }
-        print_progress((float)(y+1)/height);
     }
-
-    printf("\n");
 
     for (int i = 0; i < height; i++) {
         free(temp[i]);
