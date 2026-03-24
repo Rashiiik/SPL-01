@@ -16,7 +16,7 @@ volatile bool inputActive = false;
 void *usage(void *arg) {
     while (1) {
         if (!inputActive) {
-            printf("\r                                                               CPU:  | RAM:  MB");
+            printf("\r                                                               Work in progress");
             fflush(stdout);
         }
         usleep(500000);
