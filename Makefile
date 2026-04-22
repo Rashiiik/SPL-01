@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -Iinclude
 LDFLAGS = -lm
-TARGET = main
+TARGET = pixel
 SRC_DIR = src
 INC_DIR = include
 OBJ_DIR = obj
@@ -13,7 +13,7 @@ OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/bmp.o $(OBJ_DIR)/scaling.o $(OBJ_DIR)/denois
 all: $(OBJ_DIR) $(TARGET)
 
 $(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+	mkdir $(OBJ_DIR)
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
@@ -40,6 +40,7 @@ $(OBJ_DIR)/utils.o: $(SRC_DIR)/utils.c $(INC_DIR)/utils.h $(INC_DIR)/bmp.h $(INC
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/utils.c -o $(OBJ_DIR)/utils.o
 
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	rmdir /s /q $(OBJ_DIR)
+	del /q $(TARGET).exe
 
 .PHONY: all clean

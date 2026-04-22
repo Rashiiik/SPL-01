@@ -14,6 +14,9 @@
 
 int main(int argc, char *argv[]) {
 
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+
     int threadCount = 1;
 
     if (argc < 3) 
@@ -291,12 +294,13 @@ int main(int argc, char *argv[]) {
         else if (choice == 6) {
             printf("============BMP Info===============\n");
             convertToAscii(temp, 96, 48);      
-            printf("Input       : %s\n", argv[1]);
-            printf("Width       : %d\n", width);
-            printf("Height      : %d\n", height);
-            printf("Bit Count   : %d\n", bpp);
-            printf("Output      : %s\n", argv[2]);
-            printf("Threads     : %d\n", threadCount);
+            printf("Input            : %s\n", argv[1]);
+            printf("Width            : %d\n", width);
+            printf("Height           : %d\n", height);
+            printf("Bit Count        : %d\n", bpp);
+            printf("Output           : %s\n", argv[2]);
+            printf("Threads          : %d\n", threadCount);
+            printf("Avilable Threads : %d\n", sysinfo.dwNumberOfProcessors);
         }
         else if (choice == 7)
         {
