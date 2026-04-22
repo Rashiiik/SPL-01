@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
                                 
                 double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
                 printf("Time taken for Laplacian Filter: %lf seconds\n", elapsed);
-                fprintf(fp, "Laplacian Filter,%lf\n", elapsed);
+                fprintf(fp, "Laplacian Filter,%d,%d,%d,%lf\n", width, height, threadCount, elapsed);
                 writeBmp(argv[2], pixels, width, height);
             }
             else if (subChoice == 2)
@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
                 
                 double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
                 printf("Time taken for unsharp mask: %lf seconds\n", elapsed);
-                fprintf(fp, "Unsharp Mask,%lf\n", elapsed);
+                fprintf(fp, "Unsharp Mask,%d,%d,%d,%lf\n", width, height, threadCount, elapsed);
                 writeBmp(argv[2], pixels, width, height);
             }
             
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
             
             double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
             printf("Time taken for Sobel Operator: %lf seconds\n", elapsed);
-            fprintf(fp, "Sobel Operator,%lf\n", elapsed);
+            fprintf(fp, "Sobel Operator,%d,%d,%d,%lf\n", width, height, threadCount, elapsed);
             writeBmp(argv[2], pixels, width, height);
             
         }
@@ -254,8 +254,8 @@ int main(int argc, char *argv[]) {
             printf("============Utilites==============\n");
             printf("[1] Grayscale Conversion\n");
             printf("[2] Apply Blur\n");
-            printf("[3] Transpose/Rotate[Crashes]\n");
-            printf("[4] Negative[Works]\n");
+            printf("[3] Transpose/Rotate\n");
+            printf("[4] Negative\n");
             printf("[5] Back\n");
             printf("==================================\n");
 
@@ -300,7 +300,6 @@ int main(int argc, char *argv[]) {
         }
         else if (choice == 7)
         {
-            int subChoice;
             printf("==========Multithreading===========\n");
             
             printf("Currently Activated Threads: %d\n", threadCount);

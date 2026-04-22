@@ -1,2 +1,11 @@
 Operation,Width,Height,Threads Used,Time Taken (s)
 Lanczos Interpolation,10000,10000,8,3.465066
+Bilinear Interpolation,10000,10000,1,1.494425
+Non-Local Means,10000,10000,8,2598.567732
+Non-Local Means,10000,10000,8,658.994235
+Median Filter,10000,10000,8,13.440227
+Laplacian Filter,0.532913
+Sobel Operator,0.839225
+Unsharp Mask,0.652248
+Bilinear Interpolation,10000,10000,8,0.132289
+Lanczos Interpolation,10000,10000,8,1.648525
