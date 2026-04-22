@@ -9,3 +9,5 @@ Sobel Operator,0.839225
 Unsharp Mask,0.652248
 Bilinear Interpolation,10000,10000,8,0.132289
 Lanczos Interpolation,10000,10000,8,1.648525
+Sobel Operator,512,512,1,0.013861
+Sobel Operator,512,512,1,0.013432
