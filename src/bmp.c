@@ -10,11 +10,11 @@ RGBA **readBmp(const char *filename, int *width, int *height, int *bpp) {
         return NULL;
     }
 
-    BITMAPFILEHEADER fileHeader;
-    BITMAPINFOHEADER infoHeader;
+    MY_BITMAPFILEHEADER fileHeader;
+    MY_BITMAPINFOHEADER infoHeader;
 
-    fread(&fileHeader, sizeof(BITMAPFILEHEADER), 1, fp);
-    fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
+    fread(&fileHeader, sizeof(MY_BITMAPFILEHEADER), 1, fp);
+    fread(&infoHeader, sizeof(MY_BITMAPINFOHEADER), 1, fp);
 
     if (fileHeader.bfType != 0x4D42) {
         printf("Not a BMP file.\n");
@@ -76,16 +76,16 @@ int writeBmp(const char *filename, RGBA **pixels, int width, int height) {
     int row_padded = (width * 3 + 3) & (~3);
     int pixel_data_size = row_padded * height;
 
-    BITMAPFILEHEADER fileHeader;
-    BITMAPINFOHEADER infoHeader;
+    MY_BITMAPFILEHEADER fileHeader;
+    MY_BITMAPINFOHEADER infoHeader;
 
     fileHeader.bfType = 0x4D42;
-    fileHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + pixel_data_size;
+    fileHeader.bfSize = sizeof(MY_BITMAPFILEHEADER) + sizeof(MY_BITMAPINFOHEADER) + pixel_data_size;
     fileHeader.bfReserved1 = 0;
     fileHeader.bfReserved2 = 0;
-    fileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    fileHeader.bfOffBits = sizeof(MY_BITMAPFILEHEADER) + sizeof(MY_BITMAPINFOHEADER);
 
-    infoHeader.biSize = sizeof(BITMAPINFOHEADER);
+    infoHeader.biSize = sizeof(MY_BITMAPINFOHEADER);
     infoHeader.biWidth = width;
     infoHeader.biHeight = height;
     infoHeader.biPlanes = 1;
@@ -97,8 +97,8 @@ int writeBmp(const char *filename, RGBA **pixels, int width, int height) {
     infoHeader.biClrUsed = 0;
     infoHeader.biClrImportant = 0;
 
-    fwrite(&fileHeader, sizeof(BITMAPFILEHEADER), 1, fp);
-    fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
+    fwrite(&fileHeader, sizeof(MY_BITMAPFILEHEADER), 1, fp);
+    fwrite(&infoHeader, sizeof(MY_BITMAPINFOHEADER), 1, fp);
 
     unsigned char *row = (unsigned char *)malloc(row_padded);
 

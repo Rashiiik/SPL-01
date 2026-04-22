@@ -6,8 +6,6 @@
 #include <math.h>
 #include <pthread.h>
 
-#define NUM_THREADS 8
-
 int Gx[3][3] = { 
     {-1, 0, 1},
     {-2, 0, 2}, 
@@ -139,36 +137,16 @@ void *sobelWorkerP2(void *arg) {
     return NULL;
 }
 
-void convertToGrayscale(RGBA **pixels, int width, int height) {
+void convertToGrayscale(RGBA **pixels, int width, int height, int threadCount) {
 
     printf("Converting to Grayscale\n");
 
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            unsigned char r = pixels[y][x].r;
-            unsigned char g = pixels[y][x].g;
-            unsigned char b = pixels[y][x].b;
+    pthread_t threads[threadCount];
+    ThreadData data[threadCount];
 
-            unsigned char gray = (unsigned char)(0.299*r + 0.587*g + 0.114*b);
+    int chunks = height/threadCount;
 
-            pixels[y][x].r = gray;
-            pixels[y][x].g = gray;
-            pixels[y][x].b = gray;
-        }
-    }
-
-}
-
-void multithreadedGrayscaling(RGBA **pixels, int width, int height) {
-
-    printf("Converting to Grayscale\n");
-
-    pthread_t threads[NUM_THREADS];
-    ThreadData data[NUM_THREADS];
-
-    int chunks = height/NUM_THREADS;
-
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         data[i].pixels = pixels;
         data[i].width = width;
@@ -179,7 +157,7 @@ void multithreadedGrayscaling(RGBA **pixels, int width, int height) {
         pthread_create(&threads[i], NULL, grayscale, &data[i]);
     }
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         pthread_join(threads[i], NULL);
     }
@@ -187,7 +165,7 @@ void multithreadedGrayscaling(RGBA **pixels, int width, int height) {
     
 }
 
-void multithreadedSobel(RGBA **pixels, int width, int height) {
+void sobelOperator(RGBA **pixels, int width, int height, int threadCount) {
 
     maxMag = 0;
     
@@ -199,14 +177,14 @@ void multithreadedSobel(RGBA **pixels, int width, int height) {
         temp[i] = tempData + i * width;
     }
 
-    pthread_t threads[NUM_THREADS];
-    ThreadData data[NUM_THREADS];
+    pthread_t threads[threadCount];
+    ThreadData data[threadCount];
 
-    int chunks = height/NUM_THREADS;
+    int chunks = height/threadCount;
 
     pthread_mutex_init(&maxMagMutex, NULL);
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         data[i].pixels = pixels;
         data[i].temp = temp;
@@ -218,16 +196,16 @@ void multithreadedSobel(RGBA **pixels, int width, int height) {
         pthread_create(&threads[i], NULL, sobelWorkerP1, &data[i]);
     }
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         pthread_join(threads[i], NULL);
     }
 
     pthread_mutex_destroy(&maxMagMutex);
 
-    autoThreshold = 0.1f * maxMag;
+    autoThreshold = 0.2f * maxMag;
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         data[i].pixels = pixels;
         data[i].temp = temp;
@@ -239,7 +217,7 @@ void multithreadedSobel(RGBA **pixels, int width, int height) {
         pthread_create(&threads[i], NULL, sobelWorkerP2, &data[i]);
     }
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         pthread_join(threads[i], NULL);
     }
@@ -254,85 +232,4 @@ void multithreadedSobel(RGBA **pixels, int width, int height) {
     free(tempData);
     free(temp);
     
-}
-
-void sobelOperator(RGBA **pixels, int width, int height) {
-
-    RGBA **temp = malloc(height * sizeof(RGBA *));
-    for (int i = 0; i < height; i++) {
-        temp[i] = malloc(width * sizeof(RGBA));
-    }
-
-    float maxMag = 0;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            float gx = 0, gy = 0;
-
-            for (int ky = -1; ky <= 1; ky++) {
-                for (int kx = -1; kx <= 1; kx++) {
-                    int ny = y + ky;
-                    int nx = x + kx;
-                    
-                    if (ny < 0) ny = 0;
-                    if (ny >= height) ny = height - 1;
-                    if (nx < 0) nx = 0;
-                    if (nx >= width) nx = width - 1;
-                    
-                    float intensity = pixels[ny][nx].r;
-
-                    gx += intensity * Gx[ky+1][kx+1];
-                    gy += intensity * Gy[ky+1][kx+1];
-                }
-            }
-
-            float mag = sqrtf(gx*gx + gy*gy);
-            if (mag > maxMag) maxMag = mag;
-        }
-    }
-
-    autoThreshold = 0.1f * maxMag;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            float gx = 0, gy = 0;
-            for (int ky = -1; ky <= 1; ky++) {
-                for (int kx = -1; kx <= 1; kx++) {
-                    int ny = y + ky;
-                    int nx = x + kx;
-                    if (ny < 0) ny = 0;
-                    if (ny >= height) ny = height - 1;
-                    if (nx < 0) nx = 0;
-                    if (nx >= width) nx = width - 1;
-
-                    float intensity = pixels[ny][nx].r;
-                    gx += intensity * Gx[ky+1][kx+1];
-                    gy += intensity * Gy[ky+1][kx+1];
-                }
-            }
-            float mag = sqrtf(gx*gx + gy*gy);
-
-            if (mag > autoThreshold) {
-                temp[y][x].r = 255;
-                temp[y][x].g = 255;
-                temp[y][x].b = 255;
-            } else {
-                temp[y][x].r = 0;
-                temp[y][x].g = 0;
-                temp[y][x].b = 0;
-            }
-        }
-    }
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            pixels[y][x] = temp[y][x];
-        }
-    }
-
-    for (int i = 0; i < height; i++) {
-        free(temp[i]);
-    }
-    free(temp);
-
 }

@@ -4,9 +4,7 @@
 #include "bmp.h"
 #include <stdbool.h>
 
-RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight);
-RGBA **multithreadedBilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight);
-RGBA **lanczosInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius);
-RGBA **multithreadedLanczos(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius);
+RGBA **bilinearInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int threadCount);
+RGBA **lanczosInterpolation(RGBA **pixels, int oldWidth, int oldHeight, int newWidth, int newHeight, int radius, int threadCount);
 
 #endif

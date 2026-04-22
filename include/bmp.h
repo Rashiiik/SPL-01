@@ -11,7 +11,7 @@ typedef struct {
     uint16_t bfReserved1;
     uint16_t bfReserved2;
     uint32_t bfOffBits;
-} BITMAPFILEHEADER;
+} MY_BITMAPFILEHEADER;
 
 typedef struct {
     uint32_t biSize;
@@ -25,7 +25,7 @@ typedef struct {
     int32_t  biYPelsPerMeter;
     uint32_t biClrUsed;
     uint32_t biClrImportant;
-} BITMAPINFOHEADER;
+} MY_BITMAPINFOHEADER;
 
 #pragma pack(pop)
 
@@ -35,6 +35,12 @@ typedef struct {
     unsigned char b;
     unsigned char a;
 } RGBA;
+
+typedef struct {
+    float *r;
+    float *g;
+    float *b;
+} ImageSoA;
 
 RGBA **readBmp(const char *filename, int *width, int *height, int *bpp);
 int writeBmp(const char *filename, RGBA **pixels, int width, int height);

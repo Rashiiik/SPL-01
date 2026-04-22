@@ -3,12 +3,8 @@
 
 #include "bmp.h"
 
-void gaussianBlur(RGBA **pixels, int width, int height, int sigma);
-void multithreadedGaussian(RGBA **pixels, int width, int height, int sigma);
-void medianFilter(RGBA **pixels, int width, int height, int kernelSize);
-void multithreadedMedian(RGBA **pixels, int width, int height, int kernelSize);
-void multithreadedGaussianAVX(RGBA **pixels, int width, int height, int sigma);
-void nonLocalMeans(RGBA **pixels, int width, int height, int searchRadius, int patchRadius);
-void multithreadedNLM(RGBA **pixels, int width, int height, int searchRadius, int patchRadius);
+void gaussianBlur(RGBA **pixels, int width, int height, int sigma, int threadCount);
+void medianFilter(RGBA **pixels, int width, int height, int kernelSize, int threadCount);
+void nonLocalMeans(RGBA **pixels, int width, int height, int searchRadius, int patchRadius, int threadCount);
 
 #endif

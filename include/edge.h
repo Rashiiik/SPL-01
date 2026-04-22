@@ -3,9 +3,7 @@
 
 #include "bmp.h"
 
-void convertToGrayscale(RGBA **pixels, int width, int height);
-void sobelOperator(RGBA **pixels, int width, int height);
-void multithreadedGrayscaling(RGBA **pixels, int width, int height);
-void multithreadedSobel(RGBA **pixels, int width, int height);
+void convertToGrayscale(RGBA **pixels, int width, int height, int threadCount);
+void sobelOperator(RGBA **pixels, int width, int height, int threadCount);
 
 #endif

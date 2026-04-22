@@ -1,25 +1,8 @@
 #include "../include/utils.h"
+#include "../include/bmp.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-void print_progress(float progress) {
-    int barWidth = 32;
-    int pos = (int)(progress * barWidth);
-
-    printf("\r[");
-
-    for (int i = 0; i < barWidth; i++) {
-        if (i < pos) {
-            printf("#");
-        } else {
-            printf(".");
-        }
-    }
-
-    printf("] %6.2f%%", progress * 100.0f);
-    fflush(stdout);
-}
 
 RGBA **copyImage(RGBA **pixels, int width, int height) {
     RGBA **newImage = (RGBA **)malloc(height * sizeof(RGBA *));
@@ -80,7 +63,6 @@ void negative(RGBA **pixels, int width, int height) {
             pixels[y][x].g = 255 - pixels[y][x].g;
             pixels[y][x].b = 255 - pixels[y][x].b;
         }
-        print_progress((float)(y+1)/height);
     }
 
     printf("\n");

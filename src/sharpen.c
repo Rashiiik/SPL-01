@@ -7,7 +7,7 @@
 #include <math.h>
 #include <pthread.h>
 
-#define NUM_THREADS 8
+#define NUM_THREADS 16
 
 void *unsharpWorker(void *arg) {
 
@@ -141,75 +141,18 @@ void *laplacianWorker(void *arg) {
     return NULL;
 }
 
-void unsharpMask(RGBA **pixels, int width, int height, int sigma, float amount) {
+void unsharpMask(RGBA **pixels, int width, int height, int sigma, float amount, int threadCount) {
+
+    pthread_t threads[threadCount];
+    ThreadData data[threadCount];
     
     RGBA **temp = copyImage(pixels, width, height);
     
-    gaussianBlur(pixels, width, height, sigma);
-    
-    printf("Sharpening...\n");
-    
-    for (int y = 0; y < height; y++) 
-    {
-        for (int x = 0; x < width; x++) 
-        {
-            float diffR = amount * (temp[y][x].r - pixels[y][x].r);
-            float diffG = amount * (temp[y][x].g - pixels[y][x].g);
-            float diffB = amount * (temp[y][x].b - pixels[y][x].b);
-            
-            int newR = temp[y][x].r + round(diffR);
-            int newG = temp[y][x].g + round(diffG);
-            int newB = temp[y][x].b + round(diffB);
-            
-            if (newR < 0) 
-            {
-                newR = 0;
-            }
-            if (newR > 255) 
-            {
-                newR = 255;
-            }
-            if (newG < 0) 
-            { 
-                newG = 0; 
-            }
-            if (newG > 255) 
-            {
-                newG = 255;
-            }
-            if (newB < 0) 
-            {
-                newB = 0;
-            }
-            if (newB > 255) 
-            {
-                newB = 255;
-            }
-            
-            pixels[y][x].r = (unsigned char)newR;
-            pixels[y][x].g = (unsigned char)newG;
-            pixels[y][x].b = (unsigned char)newB;
-        }
-    }
-    
-    for (int i = 0; i < height; i++) {
-        free(temp[i]);
-    }
-    free(temp);
-}
+    gaussianBlur(pixels, width, height, sigma, threadCount);
 
-void multithreadedUnsharpMask(RGBA **pixels, int width, int height, int sigma, float amount) {
+    int chunks = height/threadCount;
 
-    pthread_t threads[NUM_THREADS];
-    ThreadData data[NUM_THREADS];
-    
-    RGBA **temp = copyImage(pixels, width, height);
-    
-    multithreadedGaussian(pixels, width, height, sigma);
-
-    int chunks = height/NUM_THREADS;
-
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         data[i].pixels = pixels;
         data[i].temp = temp;
@@ -223,7 +166,7 @@ void multithreadedUnsharpMask(RGBA **pixels, int width, int height, int sigma, f
         pthread_create(&threads[i], NULL, unsharpWorker, &data[i]);
     }
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         pthread_join(threads[i], NULL);
     }
@@ -234,106 +177,10 @@ void multithreadedUnsharpMask(RGBA **pixels, int width, int height, int sigma, f
     free(temp);
 }
 
-void laplacianFilter(RGBA **pixels, int width, int height, float amount) {
+void laplacianFilter(RGBA **pixels, int width, int height, float amount, int threadCount) {
 
-    RGBA **temp = copyImage(pixels, width, height);
-
-    int kernelSize = 3;
-
-    float kernel[3][3] = { 
-        {0, -1, 0},
-        {-1, 4, -1},
-        {0, -1, 0}
-    };
-
-    int center = kernelSize/2;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            float sumR = 0, sumG = 0, sumB = 0;
-
-            for (int j = -center; j <= center; j++)
-            {
-                for (int i = -center; i <= center; i++)
-                {
-                    int ny = j + y;
-                    int nx = i + x;
-
-                    if (ny < 0) 
-                    {
-                        ny = 0;
-                    }
-                    if (ny >= height) 
-                    {
-                        ny = height - 1;
-                    }
-                    if (nx < 0) 
-                    {
-                        nx = 0;
-                    }
-                    if (nx >= width) 
-                    {
-                        nx = width - 1;
-                    }
-
-                    sumR += kernel[j+center][i+center] * temp[ny][nx].r;
-                    sumG += kernel[j+center][i+center] * temp[ny][nx].g;
-                    sumB += kernel[j+center][i+center] * temp[ny][nx].b;
-                }
-                
-            }
-            
-            float lapR = sumR;
-            float lapG = sumG;
-            float lapB = sumB;
-
-            int newR = temp[y][x].r + round(amount * lapR);
-            int newG = temp[y][x].g + round(amount * lapG);
-            int newB = temp[y][x].b + round(amount * lapB);       
-
-            if (newR < 0) 
-            {
-                newR = 0;
-            }
-            if (newR > 255) 
-            {
-                newR = 255;
-            }
-            if (newG < 0) 
-            { 
-                newG = 0; 
-            }
-            if (newG > 255) 
-            {
-                newG = 255;
-            }
-            if (newB < 0) 
-            {
-                newB = 0;
-            }
-            if (newB > 255) 
-            {
-                newB = 255;
-            }
-            
-            pixels[y][x].r = (unsigned char)newR;
-            pixels[y][x].g = (unsigned char)newG;
-            pixels[y][x].b = (unsigned char)newB;
-        }
-        
-    }
-
-    for (int i = 0; i < height; i++) {
-        free(temp[i]);
-    }
-    free(temp);
-
-}
-
-void multithreadedLaplacian(RGBA **pixels, int width, int height, float amount) {
-
-    pthread_t threads[NUM_THREADS];
-    ThreadData data[NUM_THREADS];
+    pthread_t threads[threadCount];
+    ThreadData data[threadCount];
 
     RGBA **temp = copyImage(pixels, width, height);
 
@@ -343,12 +190,13 @@ void multithreadedLaplacian(RGBA **pixels, int width, int height, float amount) 
     {0, -1, 0},
     {-1, 4, -1},
     {0, -1, 0}
-};
+    };
+    
     int center = kernelSize/2;
 
-    int chunks = height/NUM_THREADS;
+    int chunks = height/threadCount;
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         data[i].pixels = pixels;
         data[i].temp = temp;
@@ -368,7 +216,7 @@ void multithreadedLaplacian(RGBA **pixels, int width, int height, float amount) 
         pthread_create(&threads[i], NULL, laplacianWorker, &data[i]);
     }
 
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i = 0; i < threadCount; i++)
     {
         pthread_join(threads[i], NULL);
     }

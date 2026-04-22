@@ -3,7 +3,8 @@
 
 #include "bmp.h"
 
-void print_progress(float progress);
+ImageSoA convertToSoA(RGBA **pixels, int width, int height);
+RGBA **convertToRGBA(ImageSoA img, int width, int height);
 RGBA **copyImage(RGBA **pixels, int width, int height);
 void convertToAscii(RGBA **pixels, int width, int height);
 void negative(RGBA **pixels, int width, int height);
